@@ -10,7 +10,7 @@ const testimonials = [
     detail: "Edexcel Economics",
   },
   {
-    quote: "Used it on the bus every morning for 3 weeks. The AI tutor at 2am before my mock saved me.",
+    quote: "Used it on the bus every morning for 3 weeks. The tutor at 2am before my mock saved me.",
     name: "Priya",
     detail: "AQA Economics",
   },

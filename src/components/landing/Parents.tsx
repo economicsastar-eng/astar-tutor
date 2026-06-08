@@ -10,14 +10,14 @@ export function Parents() {
                 What you're getting
               </h2>
               <p className="mt-4 text-muted-foreground leading-relaxed">
-                Most A-Level Economics students pay for private tutors at £50–80/hour. EconAStar gives your child access to an AI tutor, structured course content, and essay marking — for less than the cost of a single tutoring session per month.
+                Most A-Level Economics students pay for private tutors at £50–80/hour. EconAStar gives your child access to a tutor, structured course content, and essay marking — for less than the cost of a single tutoring session per month.
               </p>
             </div>
             <ul className="space-y-4">
               {[
                 "Full course mapped to their specific exam board",
                 "Progress dashboard you can check anytime by asking your child to share their stats",
-                "AI marking that gives the kind of specific, actionable feedback only an experienced tutor provides",
+                "Essay marking that gives the kind of specific, actionable feedback only an experienced tutor provides",
               ].map((point) => (
                 <li key={point} className="flex gap-3">
                   <span className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald/10 text-emerald text-sm font-bold">✓</span>

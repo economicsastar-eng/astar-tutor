@@ -9,7 +9,6 @@ export function LandingNav() {
         <Logo variant="light" />
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
           <a href="#how-it-works" className="hover:text-foreground transition">How it works</a>
-          <a href="#compare" className="hover:text-foreground transition">vs UpLearn</a>
           <a href="#features" className="hover:text-foreground transition">Features</a>
           <a href="#pricing" className="hover:text-foreground transition">Pricing</a>
           <a href="#faq" className="hover:text-foreground transition">FAQ</a>

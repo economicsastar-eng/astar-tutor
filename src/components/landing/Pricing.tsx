@@ -95,7 +95,7 @@ export function Pricing() {
         </div>
         <div className="mt-10 text-center space-y-3 max-w-2xl mx-auto">
           <p className="text-sm text-slate-soft">
-            UpLearn charges <span className="line-through">£354.99</span> for the same period. We charge <span className="text-white font-bold">£49.99</span>. Same results, fraction of the cost.
+            Full access for less than the cost of a single private tutoring session per month.
           </p>
           <p className="text-sm text-slate-soft">
             🔒 Progress is always saved. If you ever pause your subscription, your progress, predicted grade, and spaced repetition queue are exactly where you left them when you come back.

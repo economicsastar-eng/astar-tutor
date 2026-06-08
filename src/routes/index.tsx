@@ -2,10 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { LandingNav } from "@/components/landing/Nav";
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
-import { WhyUs } from "@/components/landing/WhyUs";
 import { Features } from "@/components/landing/Features";
 import { Testimonials } from "@/components/landing/Testimonials";
-import { Comparison } from "@/components/landing/Comparison";
 import { Pricing } from "@/components/landing/Pricing";
 import { Parents } from "@/components/landing/Parents";
 import { FAQ } from "@/components/landing/FAQ";
@@ -17,7 +15,7 @@ export const Route = createFileRoute("/")({
       { title: "EconAStar — Ace Your A-Level Economics" },
       { name: "description", content: "The only A-Level Economics platform built by a practising tutor, powered by AI, and priced so every student can afford it. AQA, Edexcel, OCR, WJEC." },
       { property: "og:title", content: "EconAStar — Ace Your A-Level Economics" },
-      { property: "og:description", content: "AI-powered A-Level Economics revision. 70% cheaper than UpLearn. Built by a practising tutor." },
+      { property: "og:description", content: "A-Level Economics revision built by a practising tutor and obsessed with your exam grade." },
     ],
   }),
   component: LandingPage,
@@ -30,10 +28,8 @@ function LandingPage() {
       <main>
         <Hero />
         <HowItWorks />
-        <WhyUs />
         <Features />
         <Testimonials />
-        <Comparison />
         <Pricing />
         <Parents />
         <FAQ />
