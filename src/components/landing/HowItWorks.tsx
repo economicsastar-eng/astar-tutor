@@ -14,7 +14,7 @@ const steps = [
   {
     icon: Trophy,
     title: "Nail Your Exam",
-    description: "AI essay marking that actually reads your answer. Exam technique built in.",
+    description: "Essay marking that actually reads your answer. Exam technique built in.",
   },
 ];
 

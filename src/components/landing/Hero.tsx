@@ -15,7 +15,7 @@ export function Hero() {
             Get Your <span className="text-gold">A*</span> in Economics.
           </h1>
           <p className="mt-6 text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-            The only A-Level Economics platform built by a practising tutor, powered by AI, and priced so every student can afford it.
+            The only A-Level Economics platform built by a practising tutor and obsessed with your exam grade.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
             <Button size="lg" className="bg-emerald hover:bg-emerald-hover text-white font-semibold px-8 h-12 text-base">

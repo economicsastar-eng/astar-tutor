@@ -3,9 +3,9 @@ import { BookOpen, ClipboardCheck, FileText, RefreshCcw, MessageCircle, Trending
 const features = [
   { icon: BookOpen, title: "Complete Course", body: "Every AQA topic, in order, nothing missing. Your one-stop revision shop." },
   { icon: ClipboardCheck, title: "Learn by Doing", body: "Questions embedded in every lesson. You're tested as you read, not just at the end." },
-  { icon: FileText, title: "AI Essay Marker", body: "Paste your essay. Get feedback in 30 seconds that quotes your exact words, not generic advice." },
+  { icon: FileText, title: "Essay Marker", body: "Paste your essay. Get feedback in 30 seconds that quotes your exact words, not generic advice." },
   { icon: RefreshCcw, title: "Adaptive Review", body: "Spaced repetition resurfaces exactly what you're forgetting, at the perfect moment." },
-  { icon: MessageCircle, title: "AI Tutor", body: "Ask any economics question, any time. Explains mark schemes in plain English, not examiner jargon." },
+  { icon: MessageCircle, title: "Your Economics Tutor", body: "Ask any economics question, any time. Explains mark schemes in plain English, not examiner jargon." },
   { icon: TrendingUp, title: "Predicted Grade", body: "See your predicted grade update in real time as you progress through the course." },
 ];
 
