@@ -1,29 +1,44 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { LandingNav } from "@/components/landing/Nav";
+import { Hero } from "@/components/landing/Hero";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { WhyUs } from "@/components/landing/WhyUs";
+import { Features } from "@/components/landing/Features";
+import { Testimonials } from "@/components/landing/Testimonials";
+import { Comparison } from "@/components/landing/Comparison";
+import { Pricing } from "@/components/landing/Pricing";
+import { Parents } from "@/components/landing/Parents";
+import { FAQ } from "@/components/landing/FAQ";
+import { LandingFooter } from "@/components/landing/Footer";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "EconAStar — Ace Your A-Level Economics" },
+      { name: "description", content: "The only A-Level Economics platform built by a practising tutor, powered by AI, and priced so every student can afford it. AQA, Edexcel, OCR, WJEC." },
+      { property: "og:title", content: "EconAStar — Ace Your A-Level Economics" },
+      { property: "og:description", content: "AI-powered A-Level Economics revision. 70% cheaper than UpLearn. Built by a practising tutor." },
     ],
   }),
-  component: Index,
+  component: LandingPage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function LandingPage() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen bg-background text-foreground font-body">
+      <LandingNav />
+      <main>
+        <Hero />
+        <HowItWorks />
+        <WhyUs />
+        <Features />
+        <Testimonials />
+        <Comparison />
+        <Pricing />
+        <Parents />
+        <FAQ />
+      </main>
+      <LandingFooter />
     </div>
   );
 }
