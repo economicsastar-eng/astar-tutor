@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "EconAStar — Ace Your A-Level Economics" },
-      { name: "description", content: "The only A-Level Economics platform built by a practising tutor, powered by AI, and priced so every student can afford it. AQA, Edexcel, OCR, WJEC." },
+      { name: "description", content: "The only A-Level Economics platform built by a practising tutor and obsessed with your exam grade. AQA, Edexcel, OCR, WJEC." },
       { property: "og:title", content: "EconAStar — Ace Your A-Level Economics" },
       { property: "og:description", content: "A-Level Economics revision built by a practising tutor and obsessed with your exam grade." },
     ],
