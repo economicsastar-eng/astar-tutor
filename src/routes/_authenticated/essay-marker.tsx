@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppLayout } from "@/components/app/AppLayout";
@@ -227,8 +227,8 @@ function EssayMarkerPage() {
           {isFree && (
             <div className="rounded-lg bg-gold/10 border border-gold/30 p-4 text-center space-y-3">
               <p className="text-sm text-gold">Essay marking is a premium feature. Upgrade to unlock.</p>
-              <Button className="bg-gold text-[#0f1c2e] hover:bg-gold/90 font-semibold">
-                Upgrade
+              <Button asChild className="bg-gold text-[#0f1c2e] hover:bg-gold/90 font-semibold">
+                <Link to="/account">Upgrade</Link>
               </Button>
             </div>
           )}

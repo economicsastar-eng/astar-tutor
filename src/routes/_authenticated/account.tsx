@@ -15,6 +15,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { createPortalSession } from "@/lib/payments.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
 
 export const Route = createFileRoute("/_authenticated/account")({
   head: () => ({ meta: [{ title: "Account — EconAStar" }] }),
@@ -29,9 +32,15 @@ const DAILY_TARGETS = [1, 2, 3, 5];
 const PLAN_LABEL: Record<string, { label: string; color: string }> = {
   free: { label: "Free", color: "bg-slate-500/20 text-slate-300" },
   monthly: { label: "Monthly", color: "bg-emerald/20 text-emerald" },
-  until_exams_2027: { label: "Until Exams 2027", color: "bg-gold/20 text-gold" },
-  until_exams_2028: { label: "Until Exams 2028", color: "bg-gold/20 text-gold" },
+  until_2027: { label: "Until Exams 2027", color: "bg-gold/20 text-gold" },
+  until_2028: { label: "Until Exams 2028", color: "bg-gold/20 text-gold" },
 };
+
+const UPGRADE_OPTIONS: Array<{ priceId: string; name: string; price: string; note: string; highlight?: boolean }> = [
+  { priceId: "monthly_subscription", name: "Monthly", price: "£19.99/mo", note: "Cancel anytime" },
+  { priceId: "until_2027_onetime", name: "Until Exams 2027", price: "£49.99", note: "One-time · access to 31 Jul 2027", highlight: true },
+  { priceId: "until_2028_onetime", name: "Until Exams 2028", price: "£79.99", note: "One-time · access to 31 Jul 2028" },
+];
 
 function AccountPage() {
   const navigate = useNavigate();
@@ -179,7 +188,7 @@ function AccountPage() {
     );
   }
 
-  const planInfo = PLAN_LABEL[form.plan] ?? PLAN_LABEL.free;
+  
 
   return (
     <AppLayout title="Account">
@@ -229,19 +238,8 @@ function AccountPage() {
         </section>
 
         {/* Subscription */}
-        <section className="rounded-xl bg-[#1a2744] border border-white/5 p-6 space-y-3">
-          <h2 className="font-display font-semibold text-white text-lg">Subscription</h2>
-          <div className="flex items-center gap-3">
-            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${planInfo.color}`}>
-              {planInfo.label}
-            </span>
-            {form.plan === "free" && (
-              <Button size="sm" className="bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold">
-                Upgrade
-              </Button>
-            )}
-          </div>
-        </section>
+        <SubscriptionSection plan={form.plan} />
+
 
         {/* Security */}
         <section className="rounded-xl bg-[#1a2744] border border-white/5 p-6 space-y-3">
@@ -317,5 +315,105 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <Label className="text-slate-300">{label}</Label>
       {children}
     </div>
+  );
+}
+
+function SubscriptionSection({ plan }: { plan: string }) {
+  const { openCheckout, checkoutElement } = useStripeCheckout();
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const planInfo = PLAN_LABEL[plan] ?? PLAN_LABEL.free;
+
+  useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("plan_expires_at")
+        .eq("id", u.user.id)
+        .maybeSingle();
+      setExpiresAt(data?.plan_expires_at ?? null);
+    })();
+  }, [plan]);
+
+  const openBillingPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const result = await createPortalSession({
+        data: { environment: getStripeEnvironment(), returnUrl: window.location.href },
+      });
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      window.open(result.url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not open billing portal");
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
+  const handleUpgrade = (priceId: string, name: string) => {
+    openCheckout({ priceId, title: `Upgrade to ${name}` });
+  };
+
+  const isPaid = plan !== "free";
+  const expiresLabel = expiresAt ? new Date(expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : null;
+
+  return (
+    <section className="rounded-xl bg-[#1a2744] border border-white/5 p-6 space-y-4">
+      <h2 className="font-display font-semibold text-white text-lg">Subscription</h2>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${planInfo.color}`}>
+          {planInfo.label}
+        </span>
+        {isPaid && expiresLabel && (
+          <span className="text-xs text-slate-400">
+            {plan === "monthly" ? "Renews" : "Access until"} {expiresLabel}
+          </span>
+        )}
+      </div>
+
+      {plan === "monthly" && (
+        <Button
+          variant="outline"
+          onClick={openBillingPortal}
+          disabled={portalLoading}
+        >
+          {portalLoading ? "Opening…" : "Manage Billing"}
+        </Button>
+      )}
+
+      {!isPaid && (
+        <div className="grid sm:grid-cols-3 gap-3 pt-2">
+          {UPGRADE_OPTIONS.map((opt) => (
+            <div
+              key={opt.priceId}
+              className={`rounded-lg p-4 flex flex-col gap-2 border ${
+                opt.highlight ? "border-emerald bg-emerald/5" : "border-white/10 bg-[#0f1c2e]"
+              }`}
+            >
+              <div className="font-display font-semibold text-white">{opt.name}</div>
+              <div className="text-white font-bold">{opt.price}</div>
+              <div className="text-xs text-slate-400 flex-1">{opt.note}</div>
+              <Button
+                size="sm"
+                onClick={() => handleUpgrade(opt.priceId, opt.name)}
+                className={
+                  opt.highlight
+                    ? "bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold"
+                    : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                }
+              >
+                Upgrade
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+      {checkoutElement}
+    </section>
   );
 }
