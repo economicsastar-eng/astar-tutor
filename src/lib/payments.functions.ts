@@ -82,7 +82,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         productDescription = product.name;
       }
 
-      const session = await stripe.checkout.sessions.create({
+      const sessionParams: any = {
         line_items: [{ price: stripePrice.id, quantity: 1 }],
         mode: isRecurring ? "subscription" : "payment",
         ui_mode: "embedded_page",
@@ -98,13 +98,11 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         ...(!isRecurring && { payment_intent_data: { description: productDescription } }),
         ...(isRecurring && {
           subscription_data: {
-            metadata: {
-              userId,
-              plan: planMeta.plan,
-            },
+            metadata: { userId, plan: planMeta.plan },
           },
         }),
-      });
+      };
+      const session = await stripe.checkout.sessions.create(sessionParams);
 
       return { clientSecret: session.client_secret ?? "" };
     } catch (error) {
