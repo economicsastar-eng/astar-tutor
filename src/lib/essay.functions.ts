@@ -18,6 +18,7 @@ export type EssayFeedback = {
   whatsMissing: string[];
   improvedParagraph: string;
   oneAction: string;
+  howToReachFullMarks: string[];
 };
 
 export type MarkEssayResult =
@@ -85,14 +86,15 @@ For AQA:
 If the student describes a diagram, assess it for correct axes, curves, shifts, and equilibrium.
 
 Return ONLY valid JSON, no preamble, no markdown fences:
-{"mark":number,"maxMark":number,"levelDescriptor":"Level X - description","whatYouDidWell":["quote exact student words","..."],"whatsMissing":["specific gap with example sentence","..."],"improvedParagraph":"rewritten weakest paragraph at A* standard","oneAction":"single concrete actionable instruction"}
+{"mark":number,"maxMark":number,"levelDescriptor":"Level X - description","whatYouDidWell":["quote exact student words","..."],"whatsMissing":["specific gap with example sentence","..."],"improvedParagraph":"rewritten weakest paragraph at A* standard","oneAction":"single concrete actionable instruction","howToReachFullMarks":["Step 1 — specific to this essay with concrete example sentence","Step 2...","Step 3..."]}
 
 RULES:
 - whatYouDidWell MUST quote exact words from the student's essay. Never generic praise.
 - whatsMissing must name the specific missing argument and give a concrete example sentence of what should be there.
 - If the essay is weak, be encouraging first, then honest.
 - Never mention content not on the stated exam board's spec.
-- oneAction must be immediately actionable, not vague.`;
+- oneAction must be immediately actionable, not vague.
+- howToReachFullMarks: ordered by impact (highest-mark improvement first), max 4 steps. Each step MUST reference something specific from THIS student's essay (quote or paraphrase their actual content) and say exactly what to add, rewrite, or extend with a concrete example sentence. Plain English, no unexplained examiner jargon. Should read like a tutor saying "to get to ${data.markAllocation}/${data.markAllocation}, here's exactly what to do". If already at full marks, return an empty array.`;
 
     let res: Response;
     try {

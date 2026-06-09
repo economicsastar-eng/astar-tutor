@@ -279,7 +279,10 @@ function EssayMarkerPage() {
           <div className="space-y-4">
             <div className="rounded-xl bg-[#1a2744] border border-white/5 p-6 flex flex-col items-center text-center gap-3">
               <Ring mark={feedback.mark} max={feedback.maxMark} />
-              <p className="text-base font-semibold text-white">{feedback.levelDescriptor}</p>
+              <p className="text-3xl sm:text-4xl font-display font-bold text-white">
+                Your mark: {feedback.mark} / {feedback.maxMark}
+              </p>
+              <p className="text-base font-semibold text-slate-200">{feedback.levelDescriptor}</p>
             </div>
 
             <div className="rounded-xl bg-[#1a2744] border border-white/5 border-l-4 border-l-emerald p-6">
@@ -305,6 +308,17 @@ function EssayMarkerPage() {
               <h3 className="font-display font-bold text-white text-lg mb-2">Your One Action for Next Time</h3>
               <p className="text-white font-semibold">{feedback.oneAction}</p>
             </div>
+
+            {feedback.howToReachFullMarks && feedback.howToReachFullMarks.length > 0 && (
+              <div className="rounded-xl bg-[#1a2744] border border-white/5 border-t-4 border-t-gold p-6">
+                <h3 className="font-display font-bold text-white text-lg mb-3">How to Reach Full Marks ⭐</h3>
+                <ol className="space-y-3 list-decimal pl-5 text-slate-200 marker:text-gold marker:font-bold">
+                  {feedback.howToReachFullMarks.map((s, i) => (
+                    <li key={i} className="pl-1 leading-relaxed">{s}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
 
             <Button
               variant="outline"
