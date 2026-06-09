@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/course")({
+export const Route = createFileRoute("/_authenticated/course/")({
   head: () => ({ meta: [{ title: "Course — EconAStar" }] }),
   component: CoursePage,
 });
