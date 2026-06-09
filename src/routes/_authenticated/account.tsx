@@ -15,6 +15,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { createPortalSession } from "@/lib/payments.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
 
 export const Route = createFileRoute("/_authenticated/account")({
   head: () => ({ meta: [{ title: "Account — EconAStar" }] }),
@@ -29,9 +32,15 @@ const DAILY_TARGETS = [1, 2, 3, 5];
 const PLAN_LABEL: Record<string, { label: string; color: string }> = {
   free: { label: "Free", color: "bg-slate-500/20 text-slate-300" },
   monthly: { label: "Monthly", color: "bg-emerald/20 text-emerald" },
-  until_exams_2027: { label: "Until Exams 2027", color: "bg-gold/20 text-gold" },
-  until_exams_2028: { label: "Until Exams 2028", color: "bg-gold/20 text-gold" },
+  until_2027: { label: "Until Exams 2027", color: "bg-gold/20 text-gold" },
+  until_2028: { label: "Until Exams 2028", color: "bg-gold/20 text-gold" },
 };
+
+const UPGRADE_OPTIONS: Array<{ priceId: string; name: string; price: string; note: string; highlight?: boolean }> = [
+  { priceId: "monthly_subscription", name: "Monthly", price: "£19.99/mo", note: "Cancel anytime" },
+  { priceId: "until_2027_onetime", name: "Until Exams 2027", price: "£49.99", note: "One-time · access to 31 Jul 2027", highlight: true },
+  { priceId: "until_2028_onetime", name: "Until Exams 2028", price: "£79.99", note: "One-time · access to 31 Jul 2028" },
+];
 
 function AccountPage() {
   const navigate = useNavigate();
@@ -229,19 +238,8 @@ function AccountPage() {
         </section>
 
         {/* Subscription */}
-        <section className="rounded-xl bg-[#1a2744] border border-white/5 p-6 space-y-3">
-          <h2 className="font-display font-semibold text-white text-lg">Subscription</h2>
-          <div className="flex items-center gap-3">
-            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${planInfo.color}`}>
-              {planInfo.label}
-            </span>
-            {form.plan === "free" && (
-              <Button size="sm" className="bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold">
-                Upgrade
-              </Button>
-            )}
-          </div>
-        </section>
+        <SubscriptionSection plan={form.plan} />
+
 
         {/* Security */}
         <section className="rounded-xl bg-[#1a2744] border border-white/5 p-6 space-y-3">
