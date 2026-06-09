@@ -1,18 +1,524 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/app/AppLayout";
+import { Button } from "@/components/ui/button";
+import {
+  ChevronDown,
+  ChevronRight,
+  Lock,
+  CheckCircle2,
+  PlayCircle,
+  Sparkles,
+  RotateCcw,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/course")({
   head: () => ({ meta: [{ title: "Course — EconAStar" }] }),
   component: CoursePage,
 });
 
+type Section = {
+  id: string;
+  theme_number: number;
+  title: string;
+  description: string;
+  sort_order: number;
+};
+type Lesson = {
+  id: string;
+  section_id: string;
+  title: string;
+  slug: string;
+  spec_reference: string;
+  estimated_minutes: number;
+  sort_order: number;
+};
+type LessonState = {
+  lesson: Lesson;
+  blockCount: number;
+  hasQuestions: boolean;
+  completed: boolean;
+  inProgress: boolean;
+  progressPercent: number;
+  unlocked: boolean;
+  status: "locked" | "available" | "in_progress" | "completed";
+};
+
 function CoursePage() {
+  const [loading, setLoading] = useState(true);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [lessonsBySection, setLessonsBySection] = useState<Record<string, LessonState[]>>({});
+  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [testOutLesson, setTestOutLesson] = useState<Lesson | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      setLoading(true);
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const userId = u.user.id;
+
+      const [{ data: secs }, { data: lessons }, { data: blocks }, { data: completions }, { data: progress }, { data: questions }] =
+        await Promise.all([
+          supabase.from("sections").select("*").order("sort_order"),
+          supabase.from("lessons").select("*").order("sort_order"),
+          supabase.from("lesson_blocks").select("lesson_id"),
+          supabase.from("lesson_completions").select("lesson_id").eq("user_id", userId),
+          supabase
+            .from("lesson_progress")
+            .select("lesson_id,current_block_order")
+            .eq("user_id", userId),
+          supabase.from("quiz_questions").select("lesson_id"),
+        ]);
+
+      if (cancel) return;
+
+      const blockCounts = new Map<string, number>();
+      (blocks ?? []).forEach((b) => blockCounts.set(b.lesson_id, (blockCounts.get(b.lesson_id) ?? 0) + 1));
+      const questionLessons = new Set((questions ?? []).map((q) => q.lesson_id));
+      const completedSet = new Set((completions ?? []).map((c) => c.lesson_id));
+      const progressMap = new Map<string, number>();
+      (progress ?? []).forEach((p) => progressMap.set(p.lesson_id, p.current_block_order));
+
+      const allLessons = (lessons ?? []) as Lesson[];
+      const byOrder = [...allLessons]; // already sorted by sort_order, grouped by section_id ordering
+      // Sequential unlock: walk global order; a lesson is unlocked if first, OR previous completed.
+      // But the spec/section structure means we should unlock based on global progression across all lessons in display order.
+      // We'll order by section sort_order then lesson sort_order.
+      const sectionOrder = new Map<string, number>();
+      (secs ?? []).forEach((s) => sectionOrder.set(s.id, s.sort_order));
+      byOrder.sort((a, b) => {
+        const sa = sectionOrder.get(a.section_id) ?? 0;
+        const sb = sectionOrder.get(b.section_id) ?? 0;
+        if (sa !== sb) return sa - sb;
+        return a.sort_order - b.sort_order;
+      });
+      const unlockedSet = new Set<string>();
+      let previousCompleted = true;
+      for (const l of byOrder) {
+        if (previousCompleted) unlockedSet.add(l.id);
+        previousCompleted = completedSet.has(l.id);
+        // After a completed lesson, the next becomes available.
+        // If lesson itself completed, also unlocked (so user can review).
+        if (completedSet.has(l.id)) unlockedSet.add(l.id);
+      }
+
+      const grouped: Record<string, LessonState[]> = {};
+      for (const l of allLessons) {
+        const bc = blockCounts.get(l.id) ?? 0;
+        const completed = completedSet.has(l.id);
+        const cur = progressMap.get(l.id) ?? 0;
+        const inProgress = !completed && cur > 0;
+        const unlocked = unlockedSet.has(l.id);
+        const pct = bc > 0 ? Math.min(100, Math.round((cur / bc) * 100)) : 0;
+        const state: LessonState = {
+          lesson: l,
+          blockCount: bc,
+          hasQuestions: questionLessons.has(l.id),
+          completed,
+          inProgress,
+          progressPercent: pct,
+          unlocked,
+          status: completed
+            ? "completed"
+            : !unlocked
+              ? "locked"
+              : inProgress
+                ? "in_progress"
+                : "available",
+        };
+        (grouped[l.section_id] ??= []).push(state);
+      }
+      for (const k of Object.keys(grouped)) {
+        grouped[k].sort((a, b) => a.lesson.sort_order - b.lesson.sort_order);
+      }
+
+      setSections((secs ?? []) as Section[]);
+      setLessonsBySection(grouped);
+      // Open first section that has an in_progress or first available lesson
+      const firstActive = (secs ?? []).find((s) =>
+        (grouped[s.id] ?? []).some((l) => l.status === "in_progress" || l.status === "available"),
+      );
+      setOpenSection((prev) => prev ?? firstActive?.id ?? (secs ?? [])[0]?.id ?? null);
+      setLoading(false);
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [refreshKey]);
+
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+
   return (
     <AppLayout title="Course">
-      <div className="rounded-xl bg-[#1a2744] border border-white/5 p-8 text-center">
-        <h2 className="text-xl font-display font-bold text-white mb-2">Course view coming next</h2>
-        <p className="text-slate-400">The linear course with section accordions, sequential unlocking, and the lesson player ships in the next phase.</p>
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-display font-bold text-white">Your A-Level Economics course</h2>
+          <p className="text-slate-400 text-sm mt-1">
+            Work through lessons in order — or test out of anything you already know.
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="rounded-xl bg-[#1a2744] border border-white/5 p-8 text-center text-slate-400">
+            Loading your course…
+          </div>
+        ) : sections.length === 0 ? (
+          <div className="rounded-xl bg-[#1a2744] border border-white/5 p-8 text-center text-slate-400">
+            No course content yet — check back soon.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {sections.map((s) => {
+              const lessons = lessonsBySection[s.id] ?? [];
+              const completedCount = lessons.filter((l) => l.completed).length;
+              const isOpen = openSection === s.id;
+              return (
+                <div key={s.id} className="rounded-xl bg-[#1a2744] border border-white/5 overflow-hidden">
+                  <button
+                    onClick={() => setOpenSection(isOpen ? null : s.id)}
+                    className="w-full flex items-center gap-3 p-4 sm:p-5 text-left hover:bg-white/[0.02] transition-colors cursor-pointer"
+                  >
+                    <div className="size-9 rounded-lg bg-emerald/10 text-emerald flex items-center justify-center font-display font-bold shrink-0">
+                      {s.theme_number}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display font-semibold text-white truncate">
+                        Theme {s.theme_number}: {s.title}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {completedCount} / {lessons.length} lessons complete
+                      </p>
+                    </div>
+                    {isOpen ? (
+                      <ChevronDown className="size-5 text-slate-400 shrink-0" />
+                    ) : (
+                      <ChevronRight className="size-5 text-slate-400 shrink-0" />
+                    )}
+                  </button>
+
+                  {isOpen && (
+                    <div className="border-t border-white/5 divide-y divide-white/5">
+                      {lessons.length === 0 && (
+                        <div className="p-5 text-sm text-slate-400">No lessons in this section yet.</div>
+                      )}
+                      {lessons.map((ls) => (
+                        <LessonRow
+                          key={ls.lesson.id}
+                          state={ls}
+                          onTestOut={() => setTestOutLesson(ls.lesson)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      {testOutLesson && (
+        <TestOutDialog
+          lesson={testOutLesson}
+          onClose={() => setTestOutLesson(null)}
+          onPassed={() => {
+            setTestOutLesson(null);
+            refresh();
+          }}
+        />
+      )}
     </AppLayout>
+  );
+}
+
+function LessonRow({ state, onTestOut }: { state: LessonState; onTestOut: () => void }) {
+  const { lesson, status, progressPercent, blockCount, hasQuestions } = state;
+
+  const statusBadge = () => {
+    if (status === "completed")
+      return (
+        <span className="inline-flex items-center gap-1 text-emerald text-xs font-medium">
+          <CheckCircle2 className="size-3.5" /> Completed
+        </span>
+      );
+    if (status === "in_progress")
+      return <span className="text-gold text-xs font-medium">In progress</span>;
+    if (status === "locked")
+      return (
+        <span className="inline-flex items-center gap-1 text-slate-500 text-xs font-medium">
+          <Lock className="size-3.5" /> Locked
+        </span>
+      );
+    return <span className="text-slate-400 text-xs font-medium">Available</span>;
+  };
+
+  const hasContent = blockCount > 0;
+
+  return (
+    <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h4 className="font-display font-semibold text-white truncate">{lesson.title}</h4>
+          {statusBadge()}
+        </div>
+        <p className="text-xs text-slate-400 mt-1">
+          {lesson.estimated_minutes} min{lesson.spec_reference ? ` • ${lesson.spec_reference}` : ""}
+          {!hasContent && " • content coming soon"}
+        </p>
+        {status === "in_progress" && (
+          <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden max-w-xs">
+            <div className="h-full bg-emerald transition-all" style={{ width: `${progressPercent}%` }} />
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {hasContent && status !== "locked" && (
+          <Button asChild className="bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold">
+            <Link to="/course/$lessonId" params={{ lessonId: lesson.slug }}>
+              {status === "completed" ? (
+                <>
+                  <RotateCcw className="size-4" /> Review
+                </>
+              ) : status === "in_progress" ? (
+                <>
+                  <PlayCircle className="size-4" /> Continue
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="size-4" /> Start
+                </>
+              )}
+            </Link>
+          </Button>
+        )}
+        {hasContent && hasQuestions && status === "available" && (
+          <Button
+            variant="outline"
+            onClick={onTestOut}
+            className="border-gold/40 text-gold hover:bg-gold/10 hover:text-gold"
+          >
+            <Sparkles className="size-4" /> Test out
+          </Button>
+        )}
+        {status === "locked" && (
+          <span className="text-xs text-slate-500">Complete previous lesson</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type TestQ = {
+  id: string;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_option: "A" | "B" | "C" | "D";
+  explanation: string;
+};
+
+const PASS_THRESHOLD = 75;
+
+function TestOutDialog({
+  lesson,
+  onClose,
+  onPassed,
+}: {
+  lesson: Lesson;
+  onClose: () => void;
+  onPassed: () => void;
+}) {
+  const [questions, setQuestions] = useState<TestQ[] | null>(null);
+  const [answers, setAnswers] = useState<Record<string, "A" | "B" | "C" | "D">>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<{ score: number; total: number; passed: boolean } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("quiz_questions")
+        .select("id,question_text,option_a,option_b,option_c,option_d,correct_option,explanation")
+        .eq("lesson_id", lesson.id)
+        .order("sort_order");
+      setQuestions((data ?? []) as TestQ[]);
+    })();
+  }, [lesson.id]);
+
+  const submit = async () => {
+    if (!questions || submitting) return;
+    if (Object.keys(answers).length < questions.length) {
+      toast.error("Answer every question before submitting.");
+      return;
+    }
+    setSubmitting(true);
+    const { data: u } = await supabase.auth.getUser();
+    const userId = u.user!.id;
+    let score = 0;
+    const attempts = questions.map((q) => {
+      const sel = answers[q.id];
+      const ok = sel === q.correct_option;
+      if (ok) score++;
+      return {
+        user_id: userId,
+        question_id: q.id,
+        lesson_id: lesson.id,
+        selected_option: sel,
+        is_correct: ok,
+        context: "test_out" as const,
+      };
+    });
+    const percent = Math.round((score / questions.length) * 100);
+    const passed = percent >= PASS_THRESHOLD;
+
+    await supabase.from("quiz_attempts").insert(attempts);
+    await supabase.from("test_out_attempts").insert({
+      user_id: userId,
+      lesson_id: lesson.id,
+      score,
+      total: questions.length,
+      passed,
+    });
+
+    if (passed) {
+      await supabase
+        .from("lesson_completions")
+        .upsert(
+          {
+            user_id: userId,
+            lesson_id: lesson.id,
+            score_percent: percent,
+            via_test_out: true,
+          },
+          { onConflict: "user_id,lesson_id" },
+        );
+      // Add to review queue with one-day initial interval.
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const next = tomorrow.toISOString().slice(0, 10);
+      await supabase.from("review_queue").upsert(
+        questions.map((q) => ({
+          user_id: userId,
+          question_id: q.id,
+          correct_streak: answers[q.id] === q.correct_option ? 1 : 0,
+          next_review_date: next,
+          is_mastered: false,
+        })),
+        { onConflict: "user_id,question_id" },
+      );
+    }
+
+    setResult({ score, total: questions.length, passed });
+    setSubmitting(false);
+  };
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          if (result?.passed) onPassed();
+          else onClose();
+        }
+      }}
+    >
+      <DialogContent className="dark bg-[#1a2744] border-white/10 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-display text-white">
+            Test out: {lesson.title}
+          </DialogTitle>
+          <DialogDescription className="text-slate-400">
+            Score {PASS_THRESHOLD}% or higher to skip this lesson. You can still review later.
+          </DialogDescription>
+        </DialogHeader>
+
+        {!questions ? (
+          <div className="py-8 text-center text-slate-400">Loading questions…</div>
+        ) : result ? (
+          <div className="py-4 space-y-3 text-center">
+            <div className={`text-4xl font-display font-bold ${result.passed ? "text-emerald" : "text-incorrect"}`}>
+              {Math.round((result.score / result.total) * 100)}%
+            </div>
+            <p className="text-slate-300">
+              {result.score} / {result.total} correct
+            </p>
+            <p className={result.passed ? "text-emerald font-medium" : "text-slate-400"}>
+              {result.passed
+                ? "Nice — lesson marked complete. Questions added to your review queue."
+                : `You need ${PASS_THRESHOLD}% to test out. Work through the lesson and try again.`}
+            </p>
+            <div className="pt-2">
+              <Button
+                onClick={() => (result.passed ? onPassed() : onClose())}
+                className="bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold"
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-5">
+              {questions.map((q, i) => (
+                <div key={q.id} className="space-y-2">
+                  <p className="font-medium text-white">
+                    {i + 1}. {q.question_text}
+                  </p>
+                  <div className="grid gap-2">
+                    {(["A", "B", "C", "D"] as const).map((opt) => {
+                      const text = q[`option_${opt.toLowerCase()}` as "option_a"];
+                      const selected = answers[q.id] === opt;
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setAnswers((a) => ({ ...a, [q.id]: opt }))}
+                          className={`text-left px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer ${
+                            selected
+                              ? "border-emerald bg-emerald/10 text-white"
+                              : "border-white/10 hover:border-white/20 text-slate-300"
+                          }`}
+                        >
+                          <span className="font-semibold mr-2">{opt}.</span>
+                          {text}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="ghost" onClick={onClose} className="text-slate-300 hover:text-white">
+                Cancel
+              </Button>
+              <Button
+                onClick={submit}
+                disabled={submitting}
+                className="bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold"
+              >
+                {submitting ? "Submitting…" : "Submit answers"}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
