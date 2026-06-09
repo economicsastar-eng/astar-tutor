@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 const tiers = [
   {
@@ -82,13 +83,14 @@ export function Pricing() {
                 ))}
               </ul>
               <Button
+                asChild
                 className={`mt-6 w-full font-semibold ${
                   t.highlighted
                     ? "bg-emerald hover:bg-emerald-hover text-white"
                     : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
                 }`}
               >
-                {t.cta}
+                <Link to="/signup">{t.cta}</Link>
               </Button>
             </div>
           ))}
