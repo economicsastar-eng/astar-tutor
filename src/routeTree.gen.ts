@@ -20,8 +20,9 @@ import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedEssayMarkerRouteImport } from './routes/_authenticated/essay-marker'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCourseRouteImport } from './routes/_authenticated/course'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as AuthenticatedCourseIndexRouteImport } from './routes/_authenticated/course.index'
+import { Route as AuthenticatedCourseLessonIdRouteImport } from './routes/_authenticated/course.$lessonId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -78,16 +79,23 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCourseRoute = AuthenticatedCourseRouteImport.update({
-  id: '/course',
-  path: '/course',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCourseIndexRoute =
+  AuthenticatedCourseIndexRouteImport.update({
+    id: '/course/',
+    path: '/course/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCourseLessonIdRoute =
+  AuthenticatedCourseLessonIdRouteImport.update({
+    id: '/course/$lessonId',
+    path: '/course/$lessonId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,13 +103,14 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account': typeof AuthenticatedAccountRoute
-  '/course': typeof AuthenticatedCourseRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/essay-marker': typeof AuthenticatedEssayMarkerRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/review': typeof AuthenticatedReviewRoute
   '/tutor': typeof AuthenticatedTutorRoute
+  '/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
+  '/course/': typeof AuthenticatedCourseIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,13 +118,14 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account': typeof AuthenticatedAccountRoute
-  '/course': typeof AuthenticatedCourseRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/essay-marker': typeof AuthenticatedEssayMarkerRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/review': typeof AuthenticatedReviewRoute
   '/tutor': typeof AuthenticatedTutorRoute
+  '/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
+  '/course': typeof AuthenticatedCourseIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,13 +135,14 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
-  '/_authenticated/course': typeof AuthenticatedCourseRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/essay-marker': typeof AuthenticatedEssayMarkerRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
   '/_authenticated/tutor': typeof AuthenticatedTutorRoute
+  '/_authenticated/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
+  '/_authenticated/course/': typeof AuthenticatedCourseIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,13 +152,14 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/account'
-    | '/course'
     | '/dashboard'
     | '/essay-marker'
     | '/onboarding'
     | '/progress'
     | '/review'
     | '/tutor'
+    | '/course/$lessonId'
+    | '/course/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,13 +167,14 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/account'
-    | '/course'
     | '/dashboard'
     | '/essay-marker'
     | '/onboarding'
     | '/progress'
     | '/review'
     | '/tutor'
+    | '/course/$lessonId'
+    | '/course'
   id:
     | '__root__'
     | '/'
@@ -170,13 +183,14 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/_authenticated/account'
-    | '/_authenticated/course'
     | '/_authenticated/dashboard'
     | '/_authenticated/essay-marker'
     | '/_authenticated/onboarding'
     | '/_authenticated/progress'
     | '/_authenticated/review'
     | '/_authenticated/tutor'
+    | '/_authenticated/course/$lessonId'
+    | '/_authenticated/course/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -266,13 +280,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/course': {
-      id: '/_authenticated/course'
-      path: '/course'
-      fullPath: '/course'
-      preLoaderRoute: typeof AuthenticatedCourseRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/account': {
       id: '/_authenticated/account'
       path: '/account'
@@ -280,29 +287,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/course/': {
+      id: '/_authenticated/course/'
+      path: '/course'
+      fullPath: '/course/'
+      preLoaderRoute: typeof AuthenticatedCourseIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/course/$lessonId': {
+      id: '/_authenticated/course/$lessonId'
+      path: '/course/$lessonId'
+      fullPath: '/course/$lessonId'
+      preLoaderRoute: typeof AuthenticatedCourseLessonIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
-  AuthenticatedCourseRoute: typeof AuthenticatedCourseRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEssayMarkerRoute: typeof AuthenticatedEssayMarkerRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
   AuthenticatedTutorRoute: typeof AuthenticatedTutorRoute
+  AuthenticatedCourseLessonIdRoute: typeof AuthenticatedCourseLessonIdRoute
+  AuthenticatedCourseIndexRoute: typeof AuthenticatedCourseIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
-  AuthenticatedCourseRoute: AuthenticatedCourseRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEssayMarkerRoute: AuthenticatedEssayMarkerRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProgressRoute: AuthenticatedProgressRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
   AuthenticatedTutorRoute: AuthenticatedTutorRoute,
+  AuthenticatedCourseLessonIdRoute: AuthenticatedCourseLessonIdRoute,
+  AuthenticatedCourseIndexRoute: AuthenticatedCourseIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
