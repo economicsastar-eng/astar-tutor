@@ -251,6 +251,9 @@ export type Database = {
           phone_number: string | null
           phone_verified: boolean
           plan: string
+          plan_expires_at: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           target_grade: string
           updated_at: string
           year_group: string
@@ -270,6 +273,9 @@ export type Database = {
           phone_number?: string | null
           phone_verified?: boolean
           plan?: string
+          plan_expires_at?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           target_grade?: string
           updated_at?: string
           year_group?: string
@@ -289,6 +295,9 @@ export type Database = {
           phone_number?: string | null
           phone_verified?: boolean
           plan?: string
+          plan_expires_at?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           target_grade?: string
           updated_at?: string
           year_group?: string
