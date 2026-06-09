@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppLayout } from "@/components/app/AppLayout";
@@ -229,8 +229,8 @@ function TutorPage() {
                 <p className="text-sm text-gold">
                   You've used your free messages today. Upgrade for unlimited.
                 </p>
-                <Button className="bg-gold text-[#0f1c2e] hover:bg-gold/90 font-semibold">
-                  Upgrade
+                <Button asChild className="bg-gold text-[#0f1c2e] hover:bg-gold/90 font-semibold">
+                  <Link to="/account">Upgrade</Link>
                 </Button>
               </div>
             ) : (
