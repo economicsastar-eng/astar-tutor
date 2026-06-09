@@ -188,7 +188,7 @@ function AccountPage() {
     );
   }
 
-  const planInfo = PLAN_LABEL[form.plan] ?? PLAN_LABEL.free;
+  
 
   return (
     <AppLayout title="Account">
