@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
 
-type CheckoutSessionResult = { clientSecret: string } | { error: string };
+type CheckoutSessionResult = { url: string } | { error: string };
 type PortalSessionResult = { url: string } | { error: string };
 
 // Plan metadata embedded on the Checkout Session so the webhook can map
@@ -85,7 +85,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       const sessionParams: any = {
         line_items: [{ price: stripePrice.id, quantity: 1 }],
         mode: isRecurring ? "subscription" : "payment",
-        ui_mode: "embedded_page",
+        ui_mode: "hosted",
         return_url: data.returnUrl,
         customer: customerId,
         managed_payments: { enabled: true },
@@ -104,7 +104,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       };
       const session = await stripe.checkout.sessions.create(sessionParams);
 
-      return { clientSecret: session.client_secret ?? "" };
+      return { url: session.url ?? "" };
     } catch (error) {
       console.error("createCheckoutSession error:", error);
       return { error: getStripeErrorMessage(error) };

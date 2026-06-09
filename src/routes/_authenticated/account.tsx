@@ -319,7 +319,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function SubscriptionSection({ plan }: { plan: string }) {
-  const { openCheckout, checkoutElement } = useStripeCheckout();
+  const { openCheckout } = useStripeCheckout();
   const [portalLoading, setPortalLoading] = useState(false);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const planInfo = PLAN_LABEL[plan] ?? PLAN_LABEL.free;
@@ -355,8 +355,8 @@ function SubscriptionSection({ plan }: { plan: string }) {
     }
   };
 
-  const handleUpgrade = (priceId: string, name: string) => {
-    openCheckout({ priceId, title: `Upgrade to ${name}` });
+  const handleUpgrade = (priceId: string) => {
+    openCheckout({ priceId });
   };
 
   const isPaid = plan !== "free";
@@ -400,7 +400,7 @@ function SubscriptionSection({ plan }: { plan: string }) {
               <div className="text-xs text-slate-400 flex-1">{opt.note}</div>
               <Button
                 size="sm"
-                onClick={() => handleUpgrade(opt.priceId, opt.name)}
+                onClick={() => handleUpgrade(opt.priceId)}
                 className={
                   opt.highlight
                     ? "bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold"
@@ -413,7 +413,7 @@ function SubscriptionSection({ plan }: { plan: string }) {
           ))}
         </div>
       )}
-      {checkoutElement}
+      
     </section>
   );
 }
