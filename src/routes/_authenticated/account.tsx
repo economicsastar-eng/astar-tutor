@@ -400,7 +400,7 @@ function SubscriptionSection({ plan }: { plan: string }) {
               <div className="text-xs text-slate-400 flex-1">{opt.note}</div>
               <Button
                 size="sm"
-                onClick={() => handleUpgrade(opt.priceId, opt.name)}
+                onClick={() => handleUpgrade(opt.priceId)}
                 className={
                   opt.highlight
                     ? "bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold"
@@ -413,7 +413,7 @@ function SubscriptionSection({ plan }: { plan: string }) {
           ))}
         </div>
       )}
-      {checkoutElement}
+      
     </section>
   );
 }
