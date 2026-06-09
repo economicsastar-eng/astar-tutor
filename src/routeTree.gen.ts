@@ -22,6 +22,7 @@ import { Route as AuthenticatedEssayMarkerRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCourseRouteImport } from './routes/_authenticated/course'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as AuthenticatedCourseLessonIdRouteImport } from './routes/_authenticated/course.$lessonId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -88,6 +89,12 @@ const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCourseLessonIdRoute =
+  AuthenticatedCourseLessonIdRouteImport.update({
+    id: '/$lessonId',
+    path: '/$lessonId',
+    getParentRoute: () => AuthenticatedCourseRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,13 +102,14 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account': typeof AuthenticatedAccountRoute
-  '/course': typeof AuthenticatedCourseRoute
+  '/course': typeof AuthenticatedCourseRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/essay-marker': typeof AuthenticatedEssayMarkerRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/review': typeof AuthenticatedReviewRoute
   '/tutor': typeof AuthenticatedTutorRoute
+  '/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,13 +117,14 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account': typeof AuthenticatedAccountRoute
-  '/course': typeof AuthenticatedCourseRoute
+  '/course': typeof AuthenticatedCourseRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/essay-marker': typeof AuthenticatedEssayMarkerRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/review': typeof AuthenticatedReviewRoute
   '/tutor': typeof AuthenticatedTutorRoute
+  '/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,13 +134,14 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
-  '/_authenticated/course': typeof AuthenticatedCourseRoute
+  '/_authenticated/course': typeof AuthenticatedCourseRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/essay-marker': typeof AuthenticatedEssayMarkerRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
   '/_authenticated/tutor': typeof AuthenticatedTutorRoute
+  '/_authenticated/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/review'
     | '/tutor'
+    | '/course/$lessonId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/review'
     | '/tutor'
+    | '/course/$lessonId'
   id:
     | '__root__'
     | '/'
@@ -177,6 +189,7 @@ export interface FileRouteTypes {
     | '/_authenticated/progress'
     | '/_authenticated/review'
     | '/_authenticated/tutor'
+    | '/_authenticated/course/$lessonId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -280,12 +293,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/course/$lessonId': {
+      id: '/_authenticated/course/$lessonId'
+      path: '/$lessonId'
+      fullPath: '/course/$lessonId'
+      preLoaderRoute: typeof AuthenticatedCourseLessonIdRouteImport
+      parentRoute: typeof AuthenticatedCourseRoute
+    }
   }
 }
 
+interface AuthenticatedCourseRouteChildren {
+  AuthenticatedCourseLessonIdRoute: typeof AuthenticatedCourseLessonIdRoute
+}
+
+const AuthenticatedCourseRouteChildren: AuthenticatedCourseRouteChildren = {
+  AuthenticatedCourseLessonIdRoute: AuthenticatedCourseLessonIdRoute,
+}
+
+const AuthenticatedCourseRouteWithChildren =
+  AuthenticatedCourseRoute._addFileChildren(AuthenticatedCourseRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
-  AuthenticatedCourseRoute: typeof AuthenticatedCourseRoute
+  AuthenticatedCourseRoute: typeof AuthenticatedCourseRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEssayMarkerRoute: typeof AuthenticatedEssayMarkerRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -296,7 +327,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
-  AuthenticatedCourseRoute: AuthenticatedCourseRoute,
+  AuthenticatedCourseRoute: AuthenticatedCourseRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEssayMarkerRoute: AuthenticatedEssayMarkerRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
@@ -318,3 +349,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
