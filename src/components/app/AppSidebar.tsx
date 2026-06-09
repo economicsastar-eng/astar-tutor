@@ -32,7 +32,9 @@ export function AppSidebar({ dueReviews }: { dueReviews: number }) {
   return (
     <aside className="hidden md:flex fixed inset-y-0 left-0 w-[250px] bg-[#0f1c2e] border-r border-white/5 flex-col z-30">
       <div className="px-6 py-5 border-b border-white/5">
-        <Link to="/dashboard"><Logo variant="dark" /></Link>
+        <Link to="/dashboard" className="inline-flex items-baseline font-display font-extrabold text-2xl tracking-tight text-white">
+          EconA<span className="text-gold">*</span><span className="text-white">star</span>
+        </Link>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {items.map(({ to, label, Icon, badge }) => {
