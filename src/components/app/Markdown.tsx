@@ -1,3 +1,5 @@
+import type React from "react";
+
 // Lightweight markdown renderer for lesson content.
 // Supports: # / ## / ### headings, **bold**, *italic*, `code`,
 // unordered lists (- ), blockquotes (> ), and paragraphs.
