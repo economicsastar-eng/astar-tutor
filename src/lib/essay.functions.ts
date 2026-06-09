@@ -94,7 +94,7 @@ RULES:
 - If the essay is weak, be encouraging first, then honest.
 - Never mention content not on the stated exam board's spec.
 - oneAction must be immediately actionable, not vague.
-- howToReachFullMarks: ordered by impact (highest-mark improvement first), max 4 steps. Each step MUST reference something specific from THIS student's essay (quote or paraphrase their actual content) and say exactly what to add, rewrite, or extend with a concrete example sentence. Plain English, no unexplained examiner jargon. Should read like a tutor saying "to get from ${'${data.markAllocation}'} to full marks, here's exactly what to do". If already at full marks, return an empty array.`;
+- howToReachFullMarks: ordered by impact (highest-mark improvement first), max 4 steps. Each step MUST reference something specific from THIS student's essay (quote or paraphrase their actual content) and say exactly what to add, rewrite, or extend with a concrete example sentence. Plain English, no unexplained examiner jargon. Should read like a tutor saying "to get to ${data.markAllocation}/${data.markAllocation}, here's exactly what to do". If already at full marks, return an empty array.`;
 
     let res: Response;
     try {
