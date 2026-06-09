@@ -61,8 +61,8 @@ export const markEssay = createServerFn({ method: "POST" })
       remaining = 10 - used - 1;
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return { ok: false, error: "AI service not configured" };
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) return { ok: false, error: "AI service not configured (LOVABLE_API_KEY missing)" };
 
     const systemPrompt = `You are an experienced A-Level Economics examiner with 15 years of marking experience across AQA, Edexcel, OCR, and WJEC/Eduqas.
 
@@ -94,36 +94,51 @@ RULES:
 - Never mention content not on the stated exam board's spec.
 - oneAction must be immediately actionable, not vague.`;
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2000,
-        system: systemPrompt,
-        messages: [{ role: "user", content: "Please mark this essay now and return only JSON." }],
-      }),
-    });
+    let res: Response;
+    try {
+      res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Lovable-API-Key": apiKey,
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: "Please mark this essay now and return only JSON." },
+          ],
+          max_tokens: 2000,
+        }),
+      });
+    } catch (err) {
+      console.error("[markEssay] fetch threw:", err);
+      const m = err instanceof Error ? err.message : String(err);
+      return { ok: false, error: `Network error calling AI gateway: ${m}` };
+    }
 
     if (!res.ok) {
       const t = await res.text();
-      console.error("Anthropic error", res.status, t);
-      return { ok: false, error: "Marking service unavailable. Please try again." };
+      console.error("[markEssay] AI gateway error", res.status, t);
+      if (res.status === 429) return { ok: false, error: "Rate limit hit. Please retry shortly." };
+      if (res.status === 402) return { ok: false, error: "AI credits exhausted. Add credits in Workspace → Usage." };
+      return { ok: false, error: `AI gateway ${res.status}: ${t.slice(0, 300)}` };
     }
 
-    const json = (await res.json()) as { content: Array<{ type: string; text: string }> };
-    const text = json.content?.find((c) => c.type === "text")?.text ?? "";
+    const json = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const text = json.choices?.[0]?.message?.content ?? "";
     const cleaned = text.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
     let feedback: EssayFeedback;
     try {
       feedback = JSON.parse(cleaned);
     } catch {
       const m = cleaned.match(/\{[\s\S]*\}/);
-      if (!m) return { ok: false, error: "Could not parse marking response. Try again." };
+      if (!m) {
+        console.error("[markEssay] could not parse model output:", text);
+        return { ok: false, error: `Could not parse AI response: ${text.slice(0, 200)}` };
+      }
       feedback = JSON.parse(m[0]);
     }
 
