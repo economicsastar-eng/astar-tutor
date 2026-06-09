@@ -81,6 +81,7 @@ function EssayMarkerPage() {
   const [essay, setEssay] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<EssayFeedback | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [plan, setPlan] = useState<string>("free");
   const [used, setUsed] = useState(0);
   const topRef = useRef<HTMLDivElement>(null);
@@ -117,6 +118,7 @@ function EssayMarkerPage() {
     if (!canSubmit) return;
     setLoading(true);
     setFeedback(null);
+    setErrorMsg(null);
     try {
       const res = await mark({
         data: {
@@ -127,7 +129,9 @@ function EssayMarkerPage() {
           essayText: essay,
         },
       });
+      console.log("[essay-marker] server response:", res);
       if (!res.ok) {
+        setErrorMsg(res.error || "Unknown error from marking service.");
         toast.error(res.error);
         return;
       }
@@ -135,6 +139,9 @@ function EssayMarkerPage() {
       const usage = await usageFn();
       setUsed(usage.used);
     } catch (e) {
+      console.error("[essay-marker] exception:", e);
+      const msg = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+      setErrorMsg(msg);
       toast.error("Something went wrong. Try again.");
     } finally {
       setLoading(false);
@@ -245,13 +252,20 @@ function EssayMarkerPage() {
               {loading ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="size-4 animate-spin" />
-                  Your examiner is reading your essay
+                  Marking your essay
                   <Dots />
                 </span>
               ) : (
                 "Mark My Essay"
               )}
             </Button>
+          )}
+
+          {errorMsg && (
+            <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200 whitespace-pre-wrap break-words">
+              <p className="font-semibold mb-1">Marking failed</p>
+              <p>{errorMsg}</p>
+            </div>
           )}
         </div>
 
