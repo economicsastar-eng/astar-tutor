@@ -16,6 +16,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async () => {
@@ -23,6 +24,9 @@ function LoginPage() {
       toast.error("Please enter your email and password");
       return;
     }
+
+    (supabase.auth as any).storage = rememberMe ? localStorage : sessionStorage;
+
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -30,6 +34,7 @@ function LoginPage() {
     });
     setLoading(false);
     if (error) {
+      (supabase.auth as any).storage = localStorage;
       toast.error(error.message);
       return;
     }
@@ -56,6 +61,32 @@ function LoginPage() {
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
           </div>
+
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="peer sr-only"
+              />
+              <div className="w-5 h-5 rounded border border-border bg-input transition-colors peer-checked:bg-[#10b981] peer-checked:border-[#10b981] flex items-center justify-center">
+                <svg
+                  className="w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={3}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors select-none">
+              Remember me
+            </span>
+          </label>
+
           <Button onClick={onSubmit} disabled={loading} className="w-full bg-emerald hover:bg-emerald-hover text-white font-semibold">
             {loading ? "Logging in…" : "Log in"}
           </Button>
