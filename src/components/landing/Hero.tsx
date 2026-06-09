@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export function Hero() {
   return (
@@ -18,12 +19,14 @@ export function Hero() {
             The only A-Level Economics platform built by a practising tutor and obsessed with your exam grade.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
-            <Button size="lg" className="bg-emerald hover:bg-emerald-hover text-white font-semibold px-8 h-12 text-base">
-              Start Free — No Card Required
-              <ArrowRight className="ml-1 h-4 w-4" />
+            <Button size="lg" className="bg-emerald hover:bg-emerald-hover text-white font-semibold px-8 h-12 text-base" asChild>
+              <Link to="/signup">
+                Start Free — No Card Required
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
             </Button>
-            <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold">
-              See How It Works
+            <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold" asChild>
+              <a href="#how-it-works">See How It Works</a>
             </Button>
           </div>
           <p className="mt-6 text-sm text-muted-foreground">
