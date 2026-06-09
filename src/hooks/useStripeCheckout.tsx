@@ -1,41 +1,40 @@
-import { useState, useCallback } from "react";
-import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useCallback } from "react";
+import { getStripeEnvironment } from "@/lib/stripe";
+import { createCheckoutSession } from "@/lib/payments.functions";
+import { toast } from "sonner";
 
 interface CheckoutOptions {
   priceId: string;
   returnUrl?: string;
-  title?: string;
 }
 
 export function useStripeCheckout() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [options, setOptions] = useState<CheckoutOptions | null>(null);
-
-  const openCheckout = useCallback((opts: CheckoutOptions) => {
-    setOptions(opts);
-    setIsOpen(true);
+  const openCheckout = useCallback(async (opts: CheckoutOptions) => {
+    try {
+      const result = await createCheckoutSession({
+        data: {
+          priceId: opts.priceId,
+          returnUrl:
+            opts.returnUrl ||
+            `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
+          environment: getStripeEnvironment(),
+        },
+      });
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      if (!result.url) {
+        toast.error("No checkout URL returned");
+        return;
+      }
+      window.open(result.url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Could not start checkout"
+      );
+    }
   }, []);
 
-  const closeCheckout = useCallback(() => {
-    setIsOpen(false);
-    setOptions(null);
-  }, []);
-
-  const checkoutElement = (
-    <Dialog open={isOpen} onOpenChange={(o) => (o ? null : closeCheckout())}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 bg-white">
-        <DialogHeader className="px-6 pt-6">
-          <DialogTitle className="text-slate-900">{options?.title ?? "Complete your purchase"}</DialogTitle>
-        </DialogHeader>
-        <div className="p-4">
-          {isOpen && options && (
-            <StripeEmbeddedCheckout priceId={options.priceId} returnUrl={options.returnUrl} />
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
-  return { openCheckout, closeCheckout, isOpen, checkoutElement };
+  return { openCheckout };
 }
