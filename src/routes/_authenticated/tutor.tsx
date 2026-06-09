@@ -12,7 +12,7 @@ import {
   type TutorMessage,
 } from "@/lib/tutor.functions";
 import { toast } from "sonner";
-import { Plus, Send, Menu, X } from "lucide-react";
+import { Plus, Send, Menu } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/tutor")({
   head: () => ({ meta: [{ title: "Tutor — EconAStar" }] }),
