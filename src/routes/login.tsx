@@ -16,6 +16,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async () => {
@@ -23,6 +24,9 @@ function LoginPage() {
       toast.error("Please enter your email and password");
       return;
     }
+
+    (supabase.auth as any).storage = rememberMe ? localStorage : sessionStorage;
+
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -30,6 +34,7 @@ function LoginPage() {
     });
     setLoading(false);
     if (error) {
+      (supabase.auth as any).storage = localStorage;
       toast.error(error.message);
       return;
     }
