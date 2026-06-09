@@ -1,0 +1,1 @@
+GRANT UPDATE ON public.sections, public.lessons, public.lesson_blocks, public.quiz_questions TO sandbox_exec;
