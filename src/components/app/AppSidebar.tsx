@@ -1,10 +1,16 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import type { ComponentType, SVGProps } from "react";
 import { Home, BookOpen, Brain, PenLine, MessageCircle, TrendingUp, Settings, MessagesSquare } from "lucide-react";
-import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "@tanstack/react-router";
 
-const items = [
+type NavItem = {
+  to: "/dashboard" | "/course" | "/review" | "/essay-marker" | "/tutor" | "/progress" | "/account";
+  label: string;
+  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+  badge?: boolean;
+};
+
+const items: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", Icon: Home },
   { to: "/course", label: "Course", Icon: BookOpen },
   { to: "/review", label: "Review", Icon: Brain, badge: true },
@@ -12,7 +18,7 @@ const items = [
   { to: "/tutor", label: "Tutor", Icon: MessageCircle },
   { to: "/progress", label: "Progress", Icon: TrendingUp },
   { to: "/account", label: "Account", Icon: Settings },
-] as const;
+];
 
 export function AppSidebar({ dueReviews }: { dueReviews: number }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
