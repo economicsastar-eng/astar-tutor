@@ -176,6 +176,8 @@ function CoursePage() {
             {sections.map((s) => {
               const lessons = lessonsBySection[s.id] ?? [];
               const completedCount = lessons.filter((l) => l.completed).length;
+              const pct =
+                lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
               const isOpen = openSection === s.id;
               return (
                 <div key={s.id} className="rounded-xl bg-[#1a2744] border border-white/5 overflow-hidden">
@@ -193,6 +195,12 @@ function CoursePage() {
                       <p className="text-xs text-slate-400 mt-0.5">
                         {completedCount} / {lessons.length} lessons complete
                       </p>
+                      <div className="mt-2 h-1 rounded-full bg-white/10 overflow-hidden max-w-md">
+                        <div
+                          className="h-full bg-emerald transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
                     </div>
                     {isOpen ? (
                       <ChevronDown className="size-5 text-slate-400 shrink-0" />
@@ -200,6 +208,7 @@ function CoursePage() {
                       <ChevronRight className="size-5 text-slate-400 shrink-0" />
                     )}
                   </button>
+
 
                   {isOpen && (
                     <div className="border-t border-white/5 divide-y divide-white/5">
