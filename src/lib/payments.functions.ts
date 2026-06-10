@@ -59,6 +59,25 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<CheckoutSessionResult> => {
     try {
       const { userId, supabase } = context;
+
+      // Block duplicate purchases — if they're already on a paid plan that
+      // hasn't expired, send them to the billing portal instead.
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("plan,plan_expires_at")
+        .eq("id", userId)
+        .maybeSingle();
+      const currentPlan = existingProfile?.plan ?? "free";
+      const expiresAt = existingProfile?.plan_expires_at
+        ? new Date(existingProfile.plan_expires_at as string)
+        : null;
+      const stillActive = !expiresAt || expiresAt > new Date();
+      if (currentPlan !== "free" && stillActive) {
+        return {
+          error: "You already have an active plan. Open Manage Billing from your account page to change or cancel it.",
+        };
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       const email = user?.email ?? undefined;
 
@@ -82,11 +101,17 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         productDescription = product.name;
       }
 
+      // Hosted Checkout requires success_url / cancel_url, NOT return_url
+      // (return_url is for embedded modes). Split returnUrl into both.
+      const successUrl = data.returnUrl;
+      const cancelUrl = data.returnUrl.split("?")[0].replace(/\/checkout\/return$/, "/account");
+
       const sessionParams: any = {
         line_items: [{ price: stripePrice.id, quantity: 1 }],
         mode: isRecurring ? "subscription" : "payment",
         ui_mode: "hosted",
-        return_url: data.returnUrl,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
         customer: customerId,
         managed_payments: { enabled: true },
         metadata: {
