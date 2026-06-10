@@ -58,7 +58,12 @@ function LoginPage() {
             <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@school.com" autoComplete="email" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link to="/forgot-password" className="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline">
+                Forgot password?
+              </Link>
+            </div>
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
           </div>
 
