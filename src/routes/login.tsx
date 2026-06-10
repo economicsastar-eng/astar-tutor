@@ -89,13 +89,14 @@ function LoginPage() {
         <form
           onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
           noValidate
+          aria-busy={loading}
           className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
         >
+          <div role="alert" aria-live="assertive" aria-atomic="true" className="sr-only">
+            {errors.form || errors.email || errors.password || ""}
+          </div>
           {errors.form && (
-            <div
-              role="alert"
-              className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {errors.form}
             </div>
           )}
@@ -108,9 +109,10 @@ function LoginPage() {
               onChange={(e) => { setEmail(e.target.value); if (errors.email || errors.form) setErrors((p) => ({ ...p, email: undefined, form: undefined })); }}
               placeholder="you@school.com"
               autoComplete="email"
+              disabled={loading}
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? "email-error" : undefined}
-              className={errors.email ? "border-destructive focus-visible:ring-destructive" : ""}
+              className={`min-h-11 ${errors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
             />
             {errors.email && (
               <p id="email-error" className="text-xs text-destructive">{errors.email}</p>
@@ -129,21 +131,23 @@ function LoginPage() {
               value={password}
               onChange={(e) => { setPassword(e.target.value); if (errors.password || errors.form) setErrors((p) => ({ ...p, password: undefined, form: undefined })); }}
               autoComplete="current-password"
+              disabled={loading}
               aria-invalid={!!errors.password}
               aria-describedby={errors.password ? "password-error" : undefined}
-              className={errors.password ? "border-destructive focus-visible:ring-destructive" : ""}
+              className={`min-h-11 ${errors.password ? "border-destructive focus-visible:ring-destructive" : ""}`}
             />
             {errors.password && (
               <p id="password-error" className="text-xs text-destructive">{errors.password}</p>
             )}
           </div>
 
-          <label className="flex items-center gap-3 cursor-pointer group">
+          <label className="flex items-center gap-3 cursor-pointer group min-h-11">
             <div className="relative">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={loading}
                 className="peer sr-only"
               />
               <div className="w-5 h-5 rounded border border-border bg-input transition-colors peer-checked:bg-[#10b981] peer-checked:border-[#10b981] flex items-center justify-center">
@@ -163,8 +167,15 @@ function LoginPage() {
             </span>
           </label>
 
-          <Button type="submit" disabled={loading} className="w-full bg-emerald hover:bg-emerald-hover text-white font-semibold">
-            {loading ? "Logging in…" : "Log in"}
+          <Button
+            type="submit"
+            disabled={loading || !email.trim() || !password}
+            aria-disabled={loading || !email.trim() || !password}
+            className="w-full min-h-11 bg-emerald hover:bg-emerald-hover text-white font-semibold"
+          >
+            {loading ? (
+              <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /><span>Logging in…</span></>
+            ) : "Log in"}
           </Button>
         </form>
 
