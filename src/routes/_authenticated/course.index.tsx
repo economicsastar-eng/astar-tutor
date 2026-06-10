@@ -54,6 +54,116 @@ type LessonState = {
   status: "locked" | "available" | "in_progress" | "completed";
 };
 
+const SUBSECTION_NAMES: Record<string, string> = {
+  // Theme 1
+  "3.1.1": "Economic Methodology and the Economic Problem",
+  "3.1.2": "Individual Economic Decision Making",
+  "3.1.3": "Price Determination in a Competitive Market",
+  "3.1.4": "Production, Costs and Revenue",
+  "3.1.5": "Perfect Competition, Imperfectly Competitive Markets and Monopoly",
+  "3.1.6": "The Labour Market",
+  "3.1.7": "The Distribution of Income and Wealth: Poverty and Inequality",
+  "3.1.8": "The Market Mechanism, Market Failure and Government Intervention",
+  // Theme 2
+  "3.2.1": "The Measurement of Macroeconomic Performance",
+  "3.2.2": "How the Macroeconomy Works",
+  "3.2.3": "Economic Performance",
+  "3.2.4": "Financial Markets and Monetary Policy",
+  "3.2.5": "Fiscal Policy and Supply-Side Policies",
+  "3.2.6": "The International Economy",
+};
+
+const THEME_SUBSECTION_ORDER: Record<number, string[]> = {
+  1: ["3.1.1", "3.1.2", "3.1.3", "3.1.4", "3.1.5", "3.1.6", "3.1.7", "3.1.8"],
+  2: ["3.2.1", "3.2.2", "3.2.3", "3.2.4", "3.2.5", "3.2.6"],
+};
+
+type Subsection = {
+  code: string;
+  name: string;
+  lessons: LessonState[];
+};
+
+function subsectionCode(specRef: string | null | undefined): string | null {
+  if (!specRef) return null;
+  const parts = specRef.split(".");
+  if (parts.length < 3) return null;
+  return `${parts[0]}.${parts[1]}.${parts[2]}`;
+}
+
+function groupLessonsBySubsection(lessons: LessonState[], themeNumber: number): Subsection[] {
+  const groups = new Map<string, LessonState[]>();
+  const orphans: LessonState[] = [];
+  for (const ls of lessons) {
+    const code = subsectionCode(ls.lesson.spec_reference);
+    if (code && SUBSECTION_NAMES[code]) {
+      const arr = groups.get(code) ?? [];
+      arr.push(ls);
+      groups.set(code, arr);
+    } else {
+      orphans.push(ls);
+    }
+  }
+  const order = THEME_SUBSECTION_ORDER[themeNumber] ?? Array.from(groups.keys()).sort();
+  const result: Subsection[] = [];
+  for (const code of order) {
+    const subLessons = groups.get(code);
+    if (!subLessons || subLessons.length === 0) continue;
+    subLessons.sort((a, b) => a.lesson.sort_order - b.lesson.sort_order);
+    result.push({ code, name: SUBSECTION_NAMES[code], lessons: subLessons });
+  }
+  if (orphans.length > 0) {
+    orphans.sort((a, b) => a.lesson.sort_order - b.lesson.sort_order);
+    result.push({ code: "other", name: "Other", lessons: orphans });
+  }
+  return result;
+}
+
+function SubsectionGroup({
+  sub,
+  onTestOut,
+}: {
+  sub: Subsection;
+  onTestOut: (lesson: Lesson) => void;
+}) {
+  const [open, setOpen] = useState(true);
+  const completed = sub.lessons.filter((l) => l.completed).length;
+  const pct = sub.lessons.length > 0 ? Math.round((completed / sub.lessons.length) * 100) : 0;
+  return (
+    <div className="border-t border-white/5 first:border-t-0">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 px-4 sm:px-5 py-3 text-left hover:bg-white/[0.02] transition-colors cursor-pointer"
+      >
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm font-display font-semibold text-white/90 truncate">
+            {sub.code !== "other" ? `${sub.code} ${sub.name}` : sub.name}
+          </h4>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            {completed} / {sub.lessons.length} lessons complete
+          </p>
+          <div className="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden max-w-sm">
+            <div className="h-full bg-emerald transition-all" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+        {open ? (
+          <ChevronDown className="size-4 text-slate-500 shrink-0" />
+        ) : (
+          <ChevronRight className="size-4 text-slate-500 shrink-0" />
+        )}
+      </button>
+      {open && (
+        <div className="divide-y divide-white/5 border-t border-white/5 bg-black/10">
+          {sub.lessons.map((ls) => (
+            <LessonRow key={ls.lesson.id} state={ls} onTestOut={() => onTestOut(ls.lesson)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function CoursePage() {
   const [loading, setLoading] = useState(true);
   const [sections, setSections] = useState<Section[]>([]);
@@ -179,6 +289,7 @@ function CoursePage() {
               const pct =
                 lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
               const isOpen = openSection === s.id;
+              const subsections = groupLessonsBySubsection(lessons, s.theme_number);
               return (
                 <div key={s.id} className="rounded-xl bg-[#1a2744] border border-white/5 overflow-hidden">
                   <button
@@ -209,17 +320,16 @@ function CoursePage() {
                     )}
                   </button>
 
-
                   {isOpen && (
-                    <div className="border-t border-white/5 divide-y divide-white/5">
+                    <div className="border-t border-white/5">
                       {lessons.length === 0 && (
                         <div className="p-5 text-sm text-slate-400">No lessons in this section yet.</div>
                       )}
-                      {lessons.map((ls) => (
-                        <LessonRow
-                          key={ls.lesson.id}
-                          state={ls}
-                          onTestOut={() => setTestOutLesson(ls.lesson)}
+                      {subsections.map((sub) => (
+                        <SubsectionGroup
+                          key={sub.code}
+                          sub={sub}
+                          onTestOut={(lesson) => setTestOutLesson(lesson)}
                         />
                       ))}
                     </div>
