@@ -81,12 +81,16 @@ function ResetPasswordPage() {
         <form
           onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
           noValidate
+          aria-busy={loading}
           className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
         >
+          <div role="alert" aria-live="assertive" aria-atomic="true" className="sr-only">
+            {errors.form || errors.password || errors.confirm || (linkInvalid ? "This reset link is invalid or has expired." : "")}
+          </div>
           {!ready ? (
             linkInvalid ? (
               <div className="space-y-3 text-center">
-                <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   This reset link is invalid or has expired.
                 </div>
                 <Link to="/forgot-password" className="text-sm font-semibold text-foreground hover:underline">
@@ -94,12 +98,15 @@ function ResetPasswordPage() {
                 </Link>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground text-center">Verifying reset link…</p>
+              <p role="status" aria-live="polite" className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Verifying reset link…
+              </p>
             )
           ) : (
             <>
               {errors.form && (
-                <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {errors.form}
                 </div>
               )}
@@ -111,9 +118,10 @@ function ResetPasswordPage() {
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); if (errors.password || errors.form) setErrors((p) => ({ ...p, password: undefined, form: undefined })); }}
                   autoComplete="new-password"
+                  disabled={loading}
                   aria-invalid={!!errors.password}
                   aria-describedby={errors.password ? "password-error" : "password-hint"}
-                  className={errors.password ? "border-destructive focus-visible:ring-destructive" : ""}
+                  className={`min-h-11 ${errors.password ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
                 {errors.password ? (
                   <p id="password-error" className="text-xs text-destructive">{errors.password}</p>
@@ -129,9 +137,10 @@ function ResetPasswordPage() {
                   value={confirm}
                   onChange={(e) => { setConfirm(e.target.value); if (errors.confirm || errors.form) setErrors((p) => ({ ...p, confirm: undefined, form: undefined })); }}
                   autoComplete="new-password"
+                  disabled={loading}
                   aria-invalid={!!errors.confirm}
                   aria-describedby={errors.confirm ? "confirm-error" : undefined}
-                  className={errors.confirm ? "border-destructive focus-visible:ring-destructive" : ""}
+                  className={`min-h-11 ${errors.confirm ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
                 {errors.confirm && (
                   <p id="confirm-error" className="text-xs text-destructive">{errors.confirm}</p>
@@ -139,10 +148,13 @@ function ResetPasswordPage() {
               </div>
               <Button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-emerald hover:bg-emerald-hover text-white font-semibold"
+                disabled={loading || !password || !confirm}
+                aria-disabled={loading || !password || !confirm}
+                className="w-full min-h-11 bg-emerald hover:bg-emerald-hover text-white font-semibold"
               >
-                {loading ? "Updating…" : "Update password"}
+                {loading ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /><span>Updating…</span></>
+                ) : "Update password"}
               </Button>
             </>
           )}
