@@ -66,14 +66,14 @@ function OnboardingPage() {
     const wh = WEEKLY_HOURS.find((w) => w.value === weeklyHours);
     const dailyTarget = wh?.target ?? 2;
 
-    const updatePayload: Record<string, unknown> = {
+    const updatePayload = {
       target_grade: targetGrade || null,
       weekly_hours: weeklyHours || null,
       daily_target: dailyTarget,
       onboarding_completed: true,
+      ...(examDate ? { exam_date: examDate } : {}),
     };
-    if (examDate) updatePayload.exam_date = examDate;
-    await supabase.from("profiles").update(updatePayload).eq("id", u.user.id);
+    await supabase.from("profiles").update(updatePayload as never).eq("id", u.user.id);
 
     const daysToExam = examDate
       ? Math.max(0, Math.ceil((new Date(examDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
