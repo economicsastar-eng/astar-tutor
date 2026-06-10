@@ -18,6 +18,7 @@ import {
   Clock,
   ChevronRight,
   Info,
+  Layers,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
