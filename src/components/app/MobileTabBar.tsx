@@ -1,9 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { ComponentType, SVGProps } from "react";
-import { Home, BookOpen, Brain, PenLine, MessageCircle } from "lucide-react";
+import { Home, BookOpen, Layers, Brain, MessageCircle } from "lucide-react";
 
 type TabItem = {
-  to: "/dashboard" | "/course" | "/review" | "/essay-marker" | "/tutor";
+  to: "/dashboard" | "/course" | "/flashcards" | "/review" | "/tutor";
   label: string;
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
   badge?: boolean;
@@ -12,8 +12,8 @@ type TabItem = {
 const items: TabItem[] = [
   { to: "/dashboard", label: "Home", Icon: Home },
   { to: "/course", label: "Course", Icon: BookOpen },
+  { to: "/flashcards", label: "Cards", Icon: Layers },
   { to: "/review", label: "Review", Icon: Brain, badge: true },
-  { to: "/essay-marker", label: "Essay", Icon: PenLine },
   { to: "/tutor", label: "Tutor", Icon: MessageCircle },
 ];
 
