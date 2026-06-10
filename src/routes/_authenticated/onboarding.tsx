@@ -69,7 +69,7 @@ function OnboardingPage() {
     await supabase
       .from("profiles")
       .update({
-        exam_date: examDate || null,
+        exam_date: examDate || undefined,
         target_grade: targetGrade || null,
         weekly_hours: weeklyHours || null,
         daily_target: dailyTarget,
