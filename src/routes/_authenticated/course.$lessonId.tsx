@@ -265,6 +265,30 @@ function LessonPlayer() {
     );
   }
 
+  if (locked && lesson) {
+    return (
+      <AppLayout title={lesson.title}>
+        <div className="max-w-xl mx-auto rounded-xl bg-[#1a2744] border border-gold/30 p-8 text-center space-y-4">
+          <div className="size-14 mx-auto rounded-full bg-gold/15 flex items-center justify-center">
+            <Trophy className="size-7 text-gold" />
+          </div>
+          <h2 className="text-2xl font-display font-bold text-white">This lesson is in Theme {lesson.themeNumber}</h2>
+          <p className="text-slate-300">
+            Free access covers Theme 1. Upgrade to unlock all 96 lessons across Themes 1–4, unlimited essay marking, and unlimited tutor messages.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <Button asChild className="bg-gold text-[#0f1c2e] hover:bg-gold/90 font-semibold">
+              <Link to="/account">Upgrade to access</Link>
+            </Button>
+            <Button asChild variant="outline" className="border-white/20 text-white hover:bg-white/5">
+              <Link to="/course">Back to course</Link>
+            </Button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   if (notFound || !lesson) {
     return (
       <AppLayout title="Lesson">
@@ -445,13 +469,13 @@ function QuestionBlock({
     <div className="space-y-4">
       <p className="text-xs uppercase tracking-wider text-emerald font-semibold">Check yourself</p>
       <h3 className="text-lg font-display font-semibold text-white">{question.question_text}</h3>
-      <div className="grid gap-2">
+      <div className="grid gap-3">
         {(["A", "B", "C", "D"] as const).map((opt) => {
           const text = question[`option_${opt.toLowerCase()}` as "option_a"];
           const isSelected = selected === opt;
           const isCorrectAnswer = opt === question.correct_option;
           let className =
-            "text-left px-4 py-3 rounded-lg border text-sm transition-colors cursor-pointer ";
+            "text-left px-4 py-4 rounded-lg border text-base transition-colors cursor-pointer min-h-[56px] ";
           if (submitted) {
             if (isCorrectAnswer)
               className += "border-emerald bg-emerald/10 text-white";

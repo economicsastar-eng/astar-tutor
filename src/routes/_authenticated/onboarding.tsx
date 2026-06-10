@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
@@ -9,59 +10,78 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
   component: OnboardingPage,
 });
 
-const EXAM_BOARDS = ["AQA", "Edexcel", "OCR", "WJEC"];
-const YEAR_GROUPS = ["Year 12", "Year 13", "Retaking", "Other"];
-const TARGET_GRADES = ["A*", "A", "B", "C", "Just want to pass"];
-const CONFIDENCE = [
-  "Starting from scratch (I barely know anything)",
-  "Got the basics but big gaps",
-  "Know most of it, need to sharpen up",
-  "Already confident, just need exam practice",
+const TARGET_GRADES = ["A*", "A", "B", "Just passing"];
+const WEEKLY_HOURS = [
+  { value: "under_1", label: "Under 1 hour", target: 1 },
+  { value: "1_to_2", label: "1–2 hours", target: 2 },
+  { value: "3_plus", label: "3+ hours", target: 3 },
 ];
 
-const STEPS = ["Exam board", "Year", "Target grade", "Confidence"];
+const STEPS = ["Exams", "Target", "Time"];
 
 function OnboardingPage() {
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [examBoard, setExamBoard] = useState("AQA");
-  const [yearGroup, setYearGroup] = useState("Year 13");
-  const [targetGrade, setTargetGrade] = useState("A*");
-  const [confidence, setConfidence] = useState("");
+  const [examDate, setExamDate] = useState("");
+  const [targetGrade, setTargetGrade] = useState("");
+  const [weeklyHours, setWeeklyHours] = useState("");
+  const [summary, setSummary] = useState<{ daysToExam: number | null; dailyTarget: number } | null>(null);
 
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
+      if (!u.user) {
+        navigate({ to: "/login", replace: true });
+        return;
+      }
       const { data: p } = await supabase
         .from("profiles")
-        .select("exam_board,year_group,target_grade,onboarding_completed")
+        .select("onboarding_completed,exam_date,target_grade,weekly_hours")
         .eq("id", u.user.id)
         .maybeSingle();
       if (p?.onboarding_completed) {
         navigate({ to: "/dashboard", replace: true });
         return;
       }
-      if (p) {
-        if (p.exam_board) {
-          const norm = ["AQA", "Edexcel", "OCR", "WJEC"].find((b) => p.exam_board.includes(b));
-          if (norm) setExamBoard(norm);
-        }
-        if (p.year_group) setYearGroup(p.year_group);
-        if (p.target_grade) setTargetGrade(p.target_grade);
-      }
+      if (p?.exam_date) setExamDate(String(p.exam_date));
+      if (p?.target_grade) setTargetGrade(p.target_grade);
+      if (p?.weekly_hours) setWeeklyHours(p.weekly_hours);
       setLoaded(true);
     })();
   }, [navigate]);
 
   const canContinue = () => {
-    if (step === 0) return !!examBoard;
-    if (step === 1) return !!yearGroup;
-    if (step === 2) return !!targetGrade;
-    if (step === 3) return !!confidence;
+    if (step === 0) return true; // exam date can be skipped
+    if (step === 1) return !!targetGrade;
+    if (step === 2) return !!weeklyHours;
     return false;
+  };
+
+  const finish = async () => {
+    setSaving(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    const wh = WEEKLY_HOURS.find((w) => w.value === weeklyHours);
+    const dailyTarget = wh?.target ?? 2;
+
+    await supabase
+      .from("profiles")
+      .update({
+        exam_date: examDate || null,
+        target_grade: targetGrade || null,
+        weekly_hours: weeklyHours || null,
+        daily_target: dailyTarget,
+        onboarding_completed: true,
+      })
+      .eq("id", u.user.id);
+
+    const daysToExam = examDate
+      ? Math.max(0, Math.ceil((new Date(examDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : null;
+    setSummary({ daysToExam, dailyTarget });
+    setSaving(false);
   };
 
   const onContinue = async () => {
@@ -69,29 +89,39 @@ function OnboardingPage() {
       setStep(step + 1);
       return;
     }
-    setSaving(true);
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        exam_board: examBoard,
-        year_group: yearGroup,
-        target_grade: targetGrade,
-        confidence_level: confidence,
-        onboarding_completed: true,
-      })
-      .eq("id", u.user.id);
-    setSaving(false);
-    if (error) return;
-    navigate({ to: "/dashboard", replace: true });
+    await finish();
   };
 
   if (!loaded) return null;
 
+  if (summary) {
+    return (
+      <div className="dark min-h-screen flex flex-col bg-[#0f1c2e] text-foreground px-4 py-10">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-xl text-center space-y-6">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold text-white">You're set up.</h1>
+            <p className="text-lg text-slate-200 leading-relaxed">
+              Based on your answers, we suggest completing{" "}
+              <span className="font-semibold text-emerald">{summary.dailyTarget} lesson{summary.dailyTarget === 1 ? "" : "s"} per day</span>.{" "}
+              {summary.daysToExam !== null && (
+                <>You have <span className="font-semibold text-gold">{summary.daysToExam} days</span> until your exam.</>
+              )}{" "}
+              Let's start.
+            </p>
+            <Button
+              onClick={() => navigate({ to: "/course", replace: true })}
+              className="bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold px-8 h-12 text-base"
+            >
+              Start your first lesson <ChevronRight className="size-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="dark min-h-screen flex flex-col bg-[#0f1c2e] text-foreground px-4 py-10">
-      {/* Progress dots */}
       <div className="flex items-center justify-center gap-2 mb-12">
         {STEPS.map((_, i) => (
           <div
@@ -106,39 +136,51 @@ function OnboardingPage() {
       <div className="flex-1 flex items-center justify-center">
         <div className="w-full max-w-2xl">
           {step === 0 && (
-            <Step title="Which exam board are you studying?">
-              <CardGrid
-                options={EXAM_BOARDS}
-                selected={examBoard}
-                onSelect={setExamBoard}
-                cols={2}
+            <Step title="When are your exams?" subtitle="We'll show a countdown so you always know how long you have. You can skip if you don't know yet.">
+              <Input
+                type="date"
+                value={examDate}
+                onChange={(e) => setExamDate(e.target.value)}
+                className="bg-[#1a2744] border-white/10 text-white h-12 text-base max-w-xs mx-auto"
               />
             </Step>
           )}
           {step === 1 && (
-            <Step title="What year are you in?">
-              <CardGrid options={YEAR_GROUPS} selected={yearGroup} onSelect={setYearGroup} cols={2} />
+            <Step title="What grade are you aiming for?">
+              <CardGrid options={TARGET_GRADES} selected={targetGrade} onSelect={setTargetGrade} cols={2} />
             </Step>
           )}
           {step === 2 && (
-            <Step title="What grade are you aiming for?">
-              <CardGrid options={TARGET_GRADES} selected={targetGrade} onSelect={setTargetGrade} cols={3} />
-            </Step>
-          )}
-          {step === 3 && (
-            <Step title="How do you feel about Economics right now?">
-              <CardGrid options={CONFIDENCE} selected={confidence} onSelect={setConfidence} cols={1} />
+            <Step title="How much time can you spend on Economics each week?">
+              <CardGrid
+                options={WEEKLY_HOURS.map((w) => w.label)}
+                selected={WEEKLY_HOURS.find((w) => w.value === weeklyHours)?.label ?? ""}
+                onSelect={(label) => {
+                  const found = WEEKLY_HOURS.find((w) => w.label === label);
+                  if (found) setWeeklyHours(found.value);
+                }}
+                cols={1}
+              />
             </Step>
           )}
 
-          <div className="flex justify-center mt-10">
+          <div className="flex justify-center gap-3 mt-10">
+            {step === 0 && (
+              <Button
+                variant="ghost"
+                onClick={() => setStep(1)}
+                className="text-slate-400 hover:text-white"
+              >
+                Skip
+              </Button>
+            )}
             <Button
               onClick={onContinue}
               disabled={!canContinue() || saving}
               className="bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold px-8 h-11"
             >
               {saving ? "Saving…" : step === STEPS.length - 1 ? "Finish" : "Continue"}
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-4 ml-1" />
             </Button>
           </div>
         </div>
@@ -147,10 +189,13 @@ function OnboardingPage() {
   );
 }
 
-function Step({ title, children }: { title: string; children: React.ReactNode }) {
+function Step({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl sm:text-3xl font-display font-bold text-white text-center">{title}</h1>
+    <div className="space-y-6">
+      <div className="space-y-3 text-center">
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-white">{title}</h1>
+        {subtitle && <p className="text-slate-400 max-w-md mx-auto">{subtitle}</p>}
+      </div>
       {children}
     </div>
   );
