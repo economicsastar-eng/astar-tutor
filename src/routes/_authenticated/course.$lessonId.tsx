@@ -101,10 +101,10 @@ function LessonPlayer() {
             .maybeSingle(),
           supabase
             .from("quiz_attempts")
-            .select("question_id,is_correct,created_at")
+            .select("question_id,is_correct,attempted_at")
             .eq("user_id", uid)
             .eq("lesson_id", les.id)
-            .order("created_at", { ascending: true }),
+            .order("attempted_at", { ascending: true }),
           supabase
             .from("lesson_completions")
             .select("score_percent")
