@@ -19,33 +19,45 @@ function ResetPasswordPage() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [linkInvalid, setLinkInvalid] = useState(false);
+  const [errors, setErrors] = useState<{ password?: string; confirm?: string; form?: string }>({});
 
   useEffect(() => {
-    // Supabase parses the recovery token from the URL hash and emits PASSWORD_RECOVERY.
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
-    // Also check existing session in case event already fired
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) setReady(true);
     });
-    return () => sub.subscription.unsubscribe();
+    // If the link is malformed/expired, no event fires — show fallback after a short wait.
+    const t = setTimeout(() => {
+      supabase.auth.getSession().then(({ data }) => {
+        if (!data.session) setLinkInvalid(true);
+      });
+    }, 2500);
+    return () => { sub.subscription.unsubscribe(); clearTimeout(t); };
   }, []);
 
   const onSubmit = async () => {
-    if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
-      return;
-    }
-    if (password !== confirm) {
-      toast.error("Passwords do not match");
-      return;
-    }
+    const next: { password?: string; confirm?: string } = {};
+    if (!password) next.password = "Password is required";
+    else if (password.length < 8) next.password = "Password must be at least 8 characters";
+    if (!confirm) next.confirm = "Please confirm your password";
+    else if (password !== confirm) next.confirm = "Passwords do not match";
+    if (next.password || next.confirm) { setErrors(next); return; }
+    setErrors({});
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      const m = error.message.toLowerCase();
+      const form = m.includes("same") || m.includes("different")
+        ? "New password must be different from your previous password."
+        : m.includes("session") || m.includes("expired") || m.includes("token")
+          ? "This reset link has expired. Please request a new one."
+          : error.message;
+      setErrors({ form });
+      toast.error(form);
       return;
     }
     toast.success("Password updated");
@@ -65,22 +77,48 @@ function ResetPasswordPage() {
           </div>
         </div>
 
-        <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <form
+          onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+          noValidate
+          className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
+        >
           {!ready ? (
-            <p className="text-sm text-muted-foreground text-center">
-              Verifying reset link…
-            </p>
+            linkInvalid ? (
+              <div className="space-y-3 text-center">
+                <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  This reset link is invalid or has expired.
+                </div>
+                <Link to="/forgot-password" className="text-sm font-semibold text-foreground hover:underline">
+                  Request a new link
+                </Link>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center">Verifying reset link…</p>
+            )
           ) : (
             <>
+              {errors.form && (
+                <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {errors.form}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="password">New password</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); if (errors.password || errors.form) setErrors((p) => ({ ...p, password: undefined, form: undefined })); }}
                   autoComplete="new-password"
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? "password-error" : "password-hint"}
+                  className={errors.password ? "border-destructive focus-visible:ring-destructive" : ""}
                 />
+                {errors.password ? (
+                  <p id="password-error" className="text-xs text-destructive">{errors.password}</p>
+                ) : (
+                  <p id="password-hint" className="text-xs text-muted-foreground">At least 8 characters.</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm">Confirm password</Label>
@@ -88,12 +126,18 @@ function ResetPasswordPage() {
                   id="confirm"
                   type="password"
                   value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
+                  onChange={(e) => { setConfirm(e.target.value); if (errors.confirm || errors.form) setErrors((p) => ({ ...p, confirm: undefined, form: undefined })); }}
                   autoComplete="new-password"
+                  aria-invalid={!!errors.confirm}
+                  aria-describedby={errors.confirm ? "confirm-error" : undefined}
+                  className={errors.confirm ? "border-destructive focus-visible:ring-destructive" : ""}
                 />
+                {errors.confirm && (
+                  <p id="confirm-error" className="text-xs text-destructive">{errors.confirm}</p>
+                )}
               </div>
               <Button
-                onClick={onSubmit}
+                type="submit"
                 disabled={loading}
                 className="w-full bg-emerald hover:bg-emerald-hover text-white font-semibold"
               >
@@ -101,7 +145,7 @@ function ResetPasswordPage() {
               </Button>
             </>
           )}
-        </div>
+        </form>
       </div>
     </div>
   );
