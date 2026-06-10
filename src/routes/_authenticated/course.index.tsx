@@ -70,7 +70,7 @@ function CoursePage() {
       if (!u.user) return;
       const userId = u.user.id;
 
-      const [{ data: secs }, { data: lessons }, { data: blocks }, { data: completions }, { data: progress }, { data: questions }] =
+      const [{ data: secs }, { data: lessons }, { data: blocks }, { data: completions }, { data: progress }, { data: questions }, { data: profile }] =
         await Promise.all([
           supabase.from("sections").select("*").order("sort_order"),
           supabase.from("lessons").select("*").order("sort_order"),
@@ -81,9 +81,12 @@ function CoursePage() {
             .select("lesson_id,current_block_order")
             .eq("user_id", userId),
           supabase.from("quiz_questions").select("lesson_id"),
+          supabase.from("profiles").select("plan").eq("id", userId).maybeSingle(),
         ]);
 
       if (cancel) return;
+
+      const isPaid = (profile?.plan ?? "free") !== "free";
 
       const blockCounts = new Map<string, number>();
       (blocks ?? []).forEach((b) => blockCounts.set(b.lesson_id, (blockCounts.get(b.lesson_id) ?? 0) + 1));
@@ -93,27 +96,11 @@ function CoursePage() {
       (progress ?? []).forEach((p) => progressMap.set(p.lesson_id, p.current_block_order));
 
       const allLessons = (lessons ?? []) as Lesson[];
-      const byOrder = [...allLessons]; // already sorted by sort_order, grouped by section_id ordering
-      // Sequential unlock: walk global order; a lesson is unlocked if first, OR previous completed.
-      // But the spec/section structure means we should unlock based on global progression across all lessons in display order.
-      // We'll order by section sort_order then lesson sort_order.
-      const sectionOrder = new Map<string, number>();
-      (secs ?? []).forEach((s) => sectionOrder.set(s.id, s.sort_order));
-      byOrder.sort((a, b) => {
-        const sa = sectionOrder.get(a.section_id) ?? 0;
-        const sb = sectionOrder.get(b.section_id) ?? 0;
-        if (sa !== sb) return sa - sb;
-        return a.sort_order - b.sort_order;
-      });
-      const unlockedSet = new Set<string>();
-      let previousCompleted = true;
-      for (const l of byOrder) {
-        if (previousCompleted) unlockedSet.add(l.id);
-        previousCompleted = completedSet.has(l.id);
-        // After a completed lesson, the next becomes available.
-        // If lesson itself completed, also unlocked (so user can review).
-        if (completedSet.has(l.id)) unlockedSet.add(l.id);
-      }
+      const sectionTheme = new Map<string, number>();
+      (secs ?? []).forEach((s) => sectionTheme.set(s.id, s.theme_number));
+
+      // Tier lock: paid users see everything; free users only get Theme 1.
+      const isUnlocked = (l: Lesson) => isPaid || sectionTheme.get(l.section_id) === 1;
 
       const grouped: Record<string, LessonState[]> = {};
       for (const l of allLessons) {
@@ -121,7 +108,7 @@ function CoursePage() {
         const completed = completedSet.has(l.id);
         const cur = progressMap.get(l.id) ?? 0;
         const inProgress = !completed && cur > 0;
-        const unlocked = unlockedSet.has(l.id);
+        const unlocked = isUnlocked(l);
         const pct = bc > 0 ? Math.min(100, Math.round((cur / bc) * 100)) : 0;
         const state: LessonState = {
           lesson: l,
@@ -145,19 +132,24 @@ function CoursePage() {
         grouped[k].sort((a, b) => a.lesson.sort_order - b.lesson.sort_order);
       }
 
-      setSections((secs ?? []) as Section[]);
+      // Only show sections that have at least one lesson
+      const visibleSections = ((secs ?? []) as Section[]).filter(
+        (s) => (grouped[s.id] ?? []).length > 0,
+      );
+
+      setSections(visibleSections);
       setLessonsBySection(grouped);
-      // Open first section that has an in_progress or first available lesson
-      const firstActive = (secs ?? []).find((s) =>
+      const firstActive = visibleSections.find((s) =>
         (grouped[s.id] ?? []).some((l) => l.status === "in_progress" || l.status === "available"),
       );
-      setOpenSection((prev) => prev ?? firstActive?.id ?? (secs ?? [])[0]?.id ?? null);
+      setOpenSection((prev) => prev ?? firstActive?.id ?? visibleSections[0]?.id ?? null);
       setLoading(false);
     })();
     return () => {
       cancel = true;
     };
   }, [refreshKey]);
+
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -184,6 +176,8 @@ function CoursePage() {
             {sections.map((s) => {
               const lessons = lessonsBySection[s.id] ?? [];
               const completedCount = lessons.filter((l) => l.completed).length;
+              const pct =
+                lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
               const isOpen = openSection === s.id;
               return (
                 <div key={s.id} className="rounded-xl bg-[#1a2744] border border-white/5 overflow-hidden">
@@ -201,6 +195,12 @@ function CoursePage() {
                       <p className="text-xs text-slate-400 mt-0.5">
                         {completedCount} / {lessons.length} lessons complete
                       </p>
+                      <div className="mt-2 h-1 rounded-full bg-white/10 overflow-hidden max-w-md">
+                        <div
+                          className="h-full bg-emerald transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
                     </div>
                     {isOpen ? (
                       <ChevronDown className="size-5 text-slate-400 shrink-0" />
@@ -208,6 +208,7 @@ function CoursePage() {
                       <ChevronRight className="size-5 text-slate-400 shrink-0" />
                     )}
                   </button>
+
 
                   {isOpen && (
                     <div className="border-t border-white/5 divide-y divide-white/5">
@@ -250,19 +251,11 @@ function LessonRow({ state, onTestOut }: { state: LessonState; onTestOut: () => 
   const statusBadge = () => {
     if (status === "completed")
       return (
-        <span className="inline-flex items-center gap-1 text-emerald text-xs font-medium">
-          <CheckCircle2 className="size-3.5" /> Completed
-        </span>
+        <CheckCircle2 className="size-4 text-emerald shrink-0" aria-label="Completed" />
       );
     if (status === "in_progress")
       return <span className="text-gold text-xs font-medium">In progress</span>;
-    if (status === "locked")
-      return (
-        <span className="inline-flex items-center gap-1 text-slate-500 text-xs font-medium">
-          <Lock className="size-3.5" /> Locked
-        </span>
-      );
-    return <span className="text-slate-400 text-xs font-medium">Available</span>;
+    return null;
   };
 
   const hasContent = blockCount > 0;
@@ -271,8 +264,8 @@ function LessonRow({ state, onTestOut }: { state: LessonState; onTestOut: () => 
     <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <h4 className="font-display font-semibold text-white truncate">{lesson.title}</h4>
           {statusBadge()}
+          <h4 className="font-display font-semibold text-white truncate">{lesson.title}</h4>
         </div>
         <p className="text-xs text-slate-400 mt-1">
           {lesson.estimated_minutes} min{lesson.spec_reference ? ` • ${lesson.spec_reference}` : ""}
@@ -314,12 +307,19 @@ function LessonRow({ state, onTestOut }: { state: LessonState; onTestOut: () => 
           </Button>
         )}
         {status === "locked" && (
-          <span className="text-xs text-slate-500">Complete previous lesson</span>
+          <Link
+            to="/account"
+            title="Upgrade to unlock"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-gold"
+          >
+            <Lock className="size-3.5" /> Upgrade to unlock
+          </Link>
         )}
       </div>
     </div>
   );
 }
+
 
 type TestQ = {
   id: string;
