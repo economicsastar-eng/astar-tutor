@@ -179,6 +179,7 @@ function CoursePage() {
               const pct =
                 lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
               const isOpen = openSection === s.id;
+              const subsections = groupLessonsBySubsection(lessons, s.theme_number);
               return (
                 <div key={s.id} className="rounded-xl bg-[#1a2744] border border-white/5 overflow-hidden">
                   <button
@@ -209,17 +210,16 @@ function CoursePage() {
                     )}
                   </button>
 
-
                   {isOpen && (
-                    <div className="border-t border-white/5 divide-y divide-white/5">
+                    <div className="border-t border-white/5">
                       {lessons.length === 0 && (
                         <div className="p-5 text-sm text-slate-400">No lessons in this section yet.</div>
                       )}
-                      {lessons.map((ls) => (
-                        <LessonRow
-                          key={ls.lesson.id}
-                          state={ls}
-                          onTestOut={() => setTestOutLesson(ls.lesson)}
+                      {subsections.map((sub) => (
+                        <SubsectionGroup
+                          key={sub.code}
+                          sub={sub}
+                          onTestOut={(lesson) => setTestOutLesson(lesson)}
                         />
                       ))}
                     </div>
