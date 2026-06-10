@@ -162,10 +162,10 @@ function LoginPage() {
             </span>
           </label>
 
-          <Button onClick={onSubmit} disabled={loading} className="w-full bg-emerald hover:bg-emerald-hover text-white font-semibold">
+          <Button type="submit" disabled={loading} className="w-full bg-emerald hover:bg-emerald-hover text-white font-semibold">
             {loading ? "Logging in…" : "Log in"}
           </Button>
-        </div>
+        </form>
 
         <p className="text-center text-sm text-muted-foreground">
           New to EconAStar?{" "}
