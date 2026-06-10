@@ -86,22 +86,6 @@ async function handleSubscriptionDeleted(subscription: any) {
   await downgradeToFree(userId, subscription.id);
 }
 
-async function handleInvoicePaymentFailed(invoice: any) {
-  // Per product spec: payment failure on the monthly subscription downgrades immediately.
-  const subscriptionId = invoice.subscription || invoice.parent?.subscription_details?.subscription;
-  const customerId = invoice.customer;
-  if (!subscriptionId || !customerId) return;
-
-  const supabase = getSupabase();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("stripe_customer_id", customerId)
-    .maybeSingle();
-  if (!profile) return;
-  await downgradeToFree(profile.id as string, subscriptionId);
-}
-
 async function downgradeToFree(userId: string, subscriptionId?: string) {
   const supabase = getSupabase();
   // Only clear the subscription id if it matches the one being deleted/failed,
@@ -134,14 +118,17 @@ async function handleWebhook(req: Request, env: StripeEnv) {
       break;
     case "customer.subscription.created":
     case "customer.subscription.updated":
+      // Handles renewals, past_due (keeps access during Stripe's dunning grace),
+      // and final transitions to unpaid/canceled which downgrade.
       await handleSubscriptionUpsert(event.data.object);
       break;
     case "customer.subscription.deleted":
+      // End of dunning or explicit cancel — downgrade now.
       await handleSubscriptionDeleted(event.data.object);
       break;
-    case "invoice.payment_failed":
-      await handleInvoicePaymentFailed(event.data.object);
-      break;
+    // Note: invoice.payment_failed intentionally NOT handled — we keep
+    // access through Stripe's retry window and revoke only when the
+    // subscription itself transitions to unpaid/canceled above.
     default:
       console.log("Unhandled event:", event.type);
   }

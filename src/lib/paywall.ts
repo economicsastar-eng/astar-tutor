@@ -6,7 +6,7 @@ export const ESSAY_MONTHLY_PLAN_LIMIT = 10;
 export const TUTOR_FREE_DAILY_LIMIT = 5;
 export const FREE_THEME_MAX = 1; // free tier covers Theme 1 only
 
-export type Plan = "free" | "monthly" | "until_may_2027" | string;
+export type Plan = "free" | "monthly" | "until_2027" | "until_2028" | string;
 
 export type GateResult =
   | { allowed: true; remaining: number | null }

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { createPortalSession } from "@/lib/payments.functions";
+import { deleteOwnAccount } from "@/lib/account.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 
 export const Route = createFileRoute("/_authenticated/account")({
@@ -165,19 +166,20 @@ function AccountPage() {
 
   const onDeleteAccount = async () => {
     setDelLoading(true);
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) {
+    try {
+      const result = await deleteOwnAccount();
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      await supabase.auth.signOut();
+      toast.success("Account deleted");
+      navigate({ to: "/", replace: true });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not delete account");
+    } finally {
       setDelLoading(false);
-      return;
     }
-    // RLS-scoped tables; cascade FKs handle the rest after the auth user is removed.
-    // We can't delete the auth user from the client directly without an edge function,
-    // so we'll wipe profile data and sign out. The user can request full deletion via support.
-    await supabase.from("profiles").delete().eq("id", u.user.id);
-    await supabase.auth.signOut();
-    setDelLoading(false);
-    toast.success("Account data deleted");
-    navigate({ to: "/", replace: true });
   };
 
   if (loading) {
