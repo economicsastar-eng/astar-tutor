@@ -1,8 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "sonner";
 
-const tiers = [
+type Tier = {
+  name: string;
+  price: string;
+  period: string;
+  note?: string;
+  badge?: string;
+  priceId?: string; // omitted = free tier
+  features: string[];
+  cta: string;
+  highlighted: boolean;
+};
+
+const tiers: Tier[] = [
   {
     name: "Free",
     price: "£0",
@@ -21,6 +36,7 @@ const tiers = [
     price: "£19.99",
     period: "/month",
     note: "Cancel anytime",
+    priceId: "monthly_subscription",
     features: [
       "Full access to all 96 lessons",
       "Unlimited AI tutor",
@@ -36,6 +52,7 @@ const tiers = [
     period: "one-time",
     note: "Never pay again until after your exams",
     badge: "Most Popular",
+    priceId: "until_2027_onetime",
     features: [
       "Everything in Monthly",
       "Unlimited essay marking",
@@ -44,6 +61,21 @@ const tiers = [
     ],
     cta: "Get Access Until Exams",
     highlighted: true,
+  },
+  {
+    name: "Until May 2028 Exams",
+    price: "£79.99",
+    period: "one-time",
+    note: "Best value for Year 12 students",
+    priceId: "until_2028_onetime",
+    features: [
+      "Everything in Until 2027",
+      "Two years of full access",
+      "Spec updates included",
+      "Progress saved if you pause",
+    ],
+    cta: "Get Access Until 2028",
+    highlighted: false,
   },
 ];
 
@@ -61,6 +93,32 @@ const faqs = [
 ];
 
 export function Pricing() {
+  const navigate = useNavigate();
+  const [pending, setPending] = useState<string | null>(null);
+
+  const onCtaClick = async (tier: Tier) => {
+    setPending(tier.name);
+    try {
+      // Free tier just sends to signup.
+      if (!tier.priceId) {
+        navigate({ to: "/signup" });
+        return;
+      }
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) {
+        // Carry plan intent through signup → auto-checkout after auth.
+        navigate({ to: "/signup", search: { plan: tier.priceId } as never });
+        return;
+      }
+      // Already signed in — jump straight into checkout.
+      navigate({ to: "/checkout/start", search: { plan: tier.priceId } as never });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setPending(null);
+    }
+  };
+
   return (
     <section id="pricing" className="py-20 md:py-28 bg-navy text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -72,13 +130,13 @@ export function Pricing() {
             Start free. Upgrade when you're ready. Cancel anytime.
           </p>
         </div>
-        <div className="grid md:grid-cols-3 gap-5 lg:gap-6 max-w-5xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6 max-w-6xl mx-auto">
           {tiers.map((t) => (
             <div
               key={t.name}
               className={`relative rounded-2xl p-6 flex flex-col ${
                 t.highlighted
-                  ? "bg-gradient-to-b from-emerald/20 to-navy-surface border-2 border-emerald md:scale-105 md:shadow-xl md:shadow-emerald/10"
+                  ? "bg-gradient-to-b from-emerald/20 to-navy-surface border-2 border-emerald lg:scale-105 lg:shadow-xl lg:shadow-emerald/10"
                   : "bg-navy-surface border border-white/10"
               }`}
             >
@@ -102,14 +160,15 @@ export function Pricing() {
                 ))}
               </ul>
               <Button
-                asChild
+                onClick={() => onCtaClick(t)}
+                disabled={pending === t.name}
                 className={`mt-6 w-full font-semibold h-11 ${
                   t.highlighted
                     ? "bg-emerald hover:bg-emerald-hover text-white"
                     : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
                 }`}
               >
-                <Link to="/signup">{t.cta}</Link>
+                {pending === t.name ? "Loading…" : t.cta}
               </Button>
             </div>
           ))}

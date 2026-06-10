@@ -8,8 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
 
+const VALID_PLANS = new Set([
+  "monthly_subscription",
+  "until_2027_onetime",
+  "until_2028_onetime",
+]);
+
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Sign up — EconAStar" }] }),
+  validateSearch: (search: Record<string, unknown>): { plan?: string } => ({
+    plan: typeof search.plan === "string" && VALID_PLANS.has(search.plan) ? search.plan : undefined,
+  }),
   component: SignupPage,
 });
 
@@ -27,6 +36,7 @@ function normalisePhone(raw: string): string | null {
 
 function SignupPage() {
   const navigate = useNavigate();
+  const { plan } = Route.useSearch();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -101,6 +111,11 @@ function SignupPage() {
     const { data: u } = await supabase.auth.getUser();
     if (u.user) {
       await supabase.from("profiles").update({ phone_verified: true }).eq("id", u.user.id);
+    }
+    // If they came in with a plan intent, jump straight into checkout.
+    if (plan) {
+      navigate({ to: "/checkout/start", search: { plan } as never });
+      return;
     }
     navigate({ to: "/onboarding" });
   };
