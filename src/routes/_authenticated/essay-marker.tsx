@@ -75,8 +75,8 @@ function EssayMarkerPage() {
   const usageFn = useServerFn(getEssayUsage);
 
   const [examBoard, setExamBoard] = useState("AQA");
-  const [questionType, setQuestionType] = useState("15-mark Discuss");
-  const [markAllocation, setMarkAllocation] = useState(15);
+  const [questionType, setQuestionType] = useState("25-mark Evaluate");
+  const [markAllocation, setMarkAllocation] = useState(25);
   const [question, setQuestion] = useState("");
   const [essay, setEssay] = useState("");
   const [loading, setLoading] = useState(false);
@@ -84,6 +84,7 @@ function EssayMarkerPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [plan, setPlan] = useState<string>("free");
   const [used, setUsed] = useState(0);
+  const [limit, setLimit] = useState<number | null>(1);
   const topRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -100,6 +101,7 @@ function EssayMarkerPage() {
       const usage = await usageFn();
       setPlan(usage.plan);
       setUsed(usage.used);
+      setLimit(usage.limit);
     })();
   }, [usageFn]);
 
@@ -113,6 +115,7 @@ function EssayMarkerPage() {
   const isFree = plan === "free";
   const isMonthly = plan === "monthly";
   const isUnlimited = plan === "until_2027" || plan === "until_2028";
+  const freeExhausted = isFree && used >= 1;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -129,7 +132,6 @@ function EssayMarkerPage() {
           essayText: essay,
         },
       });
-      console.log("[essay-marker] server response:", res);
       if (!res.ok) {
         setErrorMsg(res.error || "Unknown error from marking service.");
         toast.error(res.error);
@@ -138,8 +140,8 @@ function EssayMarkerPage() {
       setFeedback(res.feedback);
       const usage = await usageFn();
       setUsed(usage.used);
+      setLimit(usage.limit);
     } catch (e) {
-      console.error("[essay-marker] exception:", e);
       const msg = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
       setErrorMsg(msg);
       toast.error("Something went wrong. Try again.");
@@ -155,7 +157,7 @@ function EssayMarkerPage() {
     topRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const remaining = useMemo(() => Math.max(0, 10 - used), [used]);
+  const remaining = useMemo(() => Math.max(0, (limit ?? 0) - used), [limit, used]);
 
   return (
     <AppLayout title="Essay Marker">
@@ -165,7 +167,7 @@ function EssayMarkerPage() {
             <div className="space-y-2">
               <Label className="text-slate-300">Exam board</Label>
               <Select value={examBoard} onValueChange={setExamBoard}>
-                <SelectTrigger className="bg-[#0f1c2e] border-white/10 text-white">
+                <SelectTrigger className="bg-[#0f1c2e] border-white/10 text-white h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -178,7 +180,7 @@ function EssayMarkerPage() {
             <div className="space-y-2">
               <Label className="text-slate-300">Question type</Label>
               <Select value={questionType} onValueChange={onQuestionTypeChange}>
-                <SelectTrigger className="bg-[#0f1c2e] border-white/10 text-white">
+                <SelectTrigger className="bg-[#0f1c2e] border-white/10 text-white h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -196,7 +198,7 @@ function EssayMarkerPage() {
                 max={100}
                 value={markAllocation}
                 onChange={(e) => setMarkAllocation(parseInt(e.target.value || "0", 10) || 0)}
-                className="bg-[#0f1c2e] border-white/10 text-white"
+                className="bg-[#0f1c2e] border-white/10 text-white h-11 text-base"
               />
             </div>
           </div>
@@ -207,7 +209,7 @@ function EssayMarkerPage() {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Type or paste the exam question here"
-              className="min-h-[80px] bg-[#0f1c2e] border-white/10 text-white resize-y"
+              className="min-h-[88px] bg-[#0f1c2e] border-white/10 text-white resize-y text-base"
             />
           </div>
 
@@ -217,20 +219,28 @@ function EssayMarkerPage() {
               value={essay}
               onChange={(e) => setEssay(e.target.value)}
               placeholder="Type or paste your essay answer here"
-              className="min-h-[200px] bg-[#0f1c2e] border-white/10 text-white resize-y"
+              className="min-h-[240px] bg-[#0f1c2e] border-white/10 text-white resize-y text-base leading-relaxed"
             />
             <p className="text-xs text-slate-400">
               Tip: If you drew a diagram, describe it in words (e.g. "I drew an AD/AS diagram showing AD shifting right").
             </p>
           </div>
 
-          {isFree && (
+          {freeExhausted && (
             <div className="rounded-lg bg-gold/10 border border-gold/30 p-4 text-center space-y-3">
-              <p className="text-sm text-gold">Essay marking is a premium feature. Upgrade to unlock.</p>
+              <p className="text-sm text-gold">
+                You've used your 1 free essay mark. Upgrade for unlimited essay marking.
+              </p>
               <Button asChild className="bg-gold text-[#0f1c2e] hover:bg-gold/90 font-semibold">
                 <Link to="/account">Upgrade</Link>
               </Button>
             </div>
+          )}
+
+          {isFree && !freeExhausted && (
+            <p className="text-sm text-slate-300 text-center">
+              <span className="font-semibold text-white">1 free essay mark</span> — see exactly what an A-Level Economics tutor would say about your answer.
+            </p>
           )}
 
           {isMonthly && (
@@ -243,7 +253,7 @@ function EssayMarkerPage() {
             <p className="text-sm text-emerald text-center">Unlimited essay marking ✓</p>
           )}
 
-          {!isFree && (
+          {!freeExhausted && (
             <Button
               onClick={handleSubmit}
               disabled={!canSubmit}
@@ -271,7 +281,7 @@ function EssayMarkerPage() {
 
         {loading && !feedback && (
           <div className="rounded-xl border-2 border-emerald/40 bg-[#1a2744]/40 p-10 text-center animate-pulse">
-            <p className="text-slate-300">Generating examiner-level feedback…</p>
+            <p className="text-slate-300">Reading your essay like a tutor would…</p>
           </div>
         )}
 
@@ -280,40 +290,51 @@ function EssayMarkerPage() {
             <div className="rounded-xl bg-[#1a2744] border border-white/5 p-6 flex flex-col items-center text-center gap-3">
               <Ring mark={feedback.mark} max={feedback.maxMark} />
               <p className="text-3xl sm:text-4xl font-display font-bold text-white">
-                Your mark: {feedback.mark} / {feedback.maxMark}
+                {feedback.mark} / {feedback.maxMark}
               </p>
               <p className="text-base font-semibold text-slate-200">{feedback.levelDescriptor}</p>
+              {feedback.whyNotOneLevelHigher && (
+                <p className="text-sm text-slate-300 max-w-xl italic">
+                  Why not one level higher: {feedback.whyNotOneLevelHigher}
+                </p>
+              )}
             </div>
 
             <div className="rounded-xl bg-[#1a2744] border border-white/5 border-l-4 border-l-emerald p-6">
-              <h3 className="font-display font-bold text-white text-lg mb-3">What You Did Well ✅</h3>
+              <h3 className="font-display font-bold text-white text-lg mb-3">What you did well</h3>
               <ul className="space-y-2 list-disc pl-5 text-slate-200">
                 {feedback.whatYouDidWell.map((s, i) => <li key={i}>{s}</li>)}
               </ul>
             </div>
 
             <div className="rounded-xl bg-[#1a2744] border border-white/5 border-l-4 border-l-gold p-6">
-              <h3 className="font-display font-bold text-white text-lg mb-3">What's Missing ⚠️</h3>
+              <h3 className="font-display font-bold text-white text-lg mb-3">What's missing</h3>
               <ul className="space-y-2 list-disc pl-5 text-slate-200">
                 {feedback.whatsMissing.map((s, i) => <li key={i}>{s}</li>)}
               </ul>
             </div>
 
-            <div className="rounded-xl bg-[#1a2744] border border-white/5 border-t-4 border-t-gold p-6">
-              <h3 className="font-display font-bold text-white text-lg mb-3">This is what A* looks like ⭐</h3>
-              <p className="text-slate-200 italic leading-relaxed">{feedback.improvedParagraph}</p>
-            </div>
+            {feedback.paragraphTransformation && (
+              <div className="rounded-xl bg-[#1a2744] border border-white/5 border-t-4 border-t-gold p-6 space-y-4">
+                <h3 className="font-display font-bold text-white text-lg">Your weakest paragraph, rewritten to A*</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="rounded-lg bg-[#0f1c2e] border border-white/10 p-4">
+                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Your version</p>
+                    <p className="text-slate-200 italic leading-relaxed text-sm">{feedback.paragraphTransformation.original}</p>
+                  </div>
+                  <div className="rounded-lg bg-emerald/5 border border-emerald/30 p-4">
+                    <p className="text-xs uppercase tracking-wider text-emerald font-semibold mb-2">A* version</p>
+                    <p className="text-slate-100 leading-relaxed text-sm">{feedback.paragraphTransformation.improved}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-            <div className="rounded-xl border border-emerald/30 bg-emerald/10 p-6">
-              <h3 className="font-display font-bold text-white text-lg mb-2">Your One Action for Next Time</h3>
-              <p className="text-white font-semibold">{feedback.oneAction}</p>
-            </div>
-
-            {feedback.howToReachFullMarks && feedback.howToReachFullMarks.length > 0 && (
-              <div className="rounded-xl bg-[#1a2744] border border-white/5 border-t-4 border-t-gold p-6">
-                <h3 className="font-display font-bold text-white text-lg mb-3">How to Reach Full Marks ⭐</h3>
-                <ol className="space-y-3 list-decimal pl-5 text-slate-200 marker:text-gold marker:font-bold">
-                  {feedback.howToReachFullMarks.map((s, i) => (
+            {feedback.threeActionsBeforeNext && feedback.threeActionsBeforeNext.length > 0 && (
+              <div className="rounded-xl border border-emerald/30 bg-emerald/10 p-6">
+                <h3 className="font-display font-bold text-white text-lg mb-3">Do these 3 things before your next essay</h3>
+                <ol className="space-y-3 list-decimal pl-5 text-white marker:text-emerald marker:font-bold">
+                  {feedback.threeActionsBeforeNext.slice(0, 3).map((s, i) => (
                     <li key={i} className="pl-1 leading-relaxed">{s}</li>
                   ))}
                 </ol>
@@ -323,10 +344,10 @@ function EssayMarkerPage() {
             <Button
               variant="outline"
               onClick={reset}
-              className="w-full border-white/20 text-white bg-transparent hover:bg-white/5"
+              className="w-full border-white/20 text-white bg-transparent hover:bg-white/5 h-11"
             >
               <RefreshCw className="size-4 mr-2" />
-              Mark Another Essay
+              Mark another essay
             </Button>
           </div>
         )}

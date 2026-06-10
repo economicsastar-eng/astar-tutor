@@ -14,6 +14,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LessonsSlugRouteImport } from './routes/lessons.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthenticatedTutorRouteImport } from './routes/_authenticated/tutor'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
@@ -48,6 +49,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LessonsSlugRoute = LessonsSlugRouteImport.update({
+  id: '/lessons/$slug',
+  path: '/lessons/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/review': typeof AuthenticatedReviewRoute
   '/tutor': typeof AuthenticatedTutorRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/lessons/$slug': typeof LessonsSlugRoute
   '/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
   '/course/': typeof AuthenticatedCourseIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/review': typeof AuthenticatedReviewRoute
   '/tutor': typeof AuthenticatedTutorRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/lessons/$slug': typeof LessonsSlugRoute
   '/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
   '/course': typeof AuthenticatedCourseIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/_authenticated/review': typeof AuthenticatedReviewRoute
   '/_authenticated/tutor': typeof AuthenticatedTutorRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/lessons/$slug': typeof LessonsSlugRoute
   '/_authenticated/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
   '/_authenticated/course/': typeof AuthenticatedCourseIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/tutor'
     | '/checkout/return'
+    | '/lessons/$slug'
     | '/course/$lessonId'
     | '/course/'
     | '/api/public/payments/webhook'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/tutor'
     | '/checkout/return'
+    | '/lessons/$slug'
     | '/course/$lessonId'
     | '/course'
     | '/api/public/payments/webhook'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/_authenticated/review'
     | '/_authenticated/tutor'
     | '/checkout/return'
+    | '/lessons/$slug'
     | '/_authenticated/course/$lessonId'
     | '/_authenticated/course/'
     | '/api/public/payments/webhook'
@@ -225,6 +237,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  LessonsSlugRoute: typeof LessonsSlugRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -263,6 +276,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lessons/$slug': {
+      id: '/lessons/$slug'
+      path: '/lessons/$slug'
+      fullPath: '/lessons/$slug'
+      preLoaderRoute: typeof LessonsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout/return': {
@@ -379,6 +399,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  LessonsSlugRoute: LessonsSlugRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
