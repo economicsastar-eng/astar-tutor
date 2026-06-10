@@ -108,7 +108,7 @@ function TutorPage() {
   };
 
   const isFree = plan === "free";
-  const exhausted = isFree && used >= 3;
+  const exhausted = isFree && used >= 5;
 
   const sidebar = (
     <div className="flex flex-col h-full bg-[#0f1c2e]">
@@ -259,7 +259,7 @@ function TutorPage() {
                 </div>
                 {isFree && (
                   <p className="text-xs text-slate-400 text-center">
-                    {Math.max(0, 3 - used)}/3 free messages today
+                    {Math.max(0, 5 - used)}/5 free messages today
                   </p>
                 )}
               </>

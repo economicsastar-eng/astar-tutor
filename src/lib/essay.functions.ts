@@ -14,11 +14,14 @@ export type EssayFeedback = {
   mark: number;
   maxMark: number;
   levelDescriptor: string;
+  whyNotOneLevelHigher: string;
   whatYouDidWell: string[];
   whatsMissing: string[];
-  improvedParagraph: string;
-  oneAction: string;
-  howToReachFullMarks: string[];
+  paragraphTransformation: {
+    original: string;
+    improved: string;
+  };
+  threeActionsBeforeNext: string[];
 };
 
 export type MarkEssayResult =
@@ -47,9 +50,20 @@ export const markEssay = createServerFn({ method: "POST" })
     let remaining: number | null = null;
 
     if (plan === "free") {
-      return { ok: false, error: "Essay marking is a premium feature", upgrade: true };
-    }
-    if (plan === "monthly") {
+      const { count } = await supabase
+        .from("essay_submissions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId);
+      const used = count ?? 0;
+      if (used >= 1) {
+        return {
+          ok: false,
+          error: "You've used your 1 free essay mark. Upgrade for unlimited essay marking.",
+          upgrade: true,
+        };
+      }
+      remaining = 0;
+    } else if (plan === "monthly") {
       const { count } = await supabase
         .from("essay_submissions")
         .select("id", { count: "exact", head: true })
@@ -65,7 +79,7 @@ export const markEssay = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) return { ok: false, error: "AI service not configured (LOVABLE_API_KEY missing)" };
 
-    const systemPrompt = `You are an experienced A-Level Economics examiner with 15 years of marking experience across AQA, Edexcel, OCR, and WJEC/Eduqas.
+    const systemPrompt = `You are a warm, direct A-Level Economics tutor — the kind of private tutor who reads a student's essay carefully, says exactly what's working, names exactly what's missing, and shows them how to fix it. You are NOT a formal examiner and NOT a generic AI assistant.
 
 Exam board: ${data.examBoard}
 Question type: ${data.questionType}
@@ -75,26 +89,24 @@ Question: ${data.questionText}
 Student essay:
 ${data.essayText}
 
-Apply the correct mark scheme levels for the specified exam board.
+Mark using ${data.examBoard} level descriptors. For AQA 25-mark Evaluate:
+- Level 1 (1-5): basic, one-sided
+- Level 2 (6-10): some application, limited analysis
+- Level 3 (11-15): developed analysis, weak evaluation
+- Level 4 (16-20): two-sided analysis with some judgement
+- Level 5 (21-25): sustained evaluation, supported judgement, clear conclusion
 
-For AQA:
-- 4-mark: Level 1 (1-2, basic knowledge), Level 2 (3-4, developed chain of reasoning)
-- 8-mark: Level 1 (1-3), Level 2 (4-6), Level 3 (7-8, two developed chains with application)
-- 15-mark: Level 1 (1-5), Level 2 (6-9), Level 3 (10-12), Level 4 (13-15, two-sided evaluation with judgement)
-- 25-mark: Level 1 (1-5), Level 2 (6-10), Level 3 (11-15), Level 4 (16-20), Level 5 (21-25, sustained evaluation with conclusion)
+NON-NEGOTIABLE RULES:
+1. Quote the student's EXACT words at least THREE times across whatYouDidWell and whatsMissing, using straight quotation marks "like this". Quote real phrases from their essay — never paraphrase and never invent quotes.
+2. Name the specific missing argument by economic content — not "add more evaluation" but e.g. "you haven't discussed how the size of PED determines whether the tax actually reduces quantity demanded significantly — a tax on cigarettes (PED ≈ 0.4) reduces Q by far less than a tax on luxury cars (PED ≈ 2.5)".
+3. paragraphTransformation: pick the student's WEAKEST paragraph (quote it verbatim as 'original'), then rewrite it to A* standard as 'improved'. The improved version must add specific economic content the student left out — not just better grammar.
+4. threeActionsBeforeNext: EXACTLY 3 numbered, concrete actions the student should do before their next essay. Specific, not vague. Example of good: "Memorise the AQA 25-mark Level 5 descriptor and write it at the top of your next essay so you know what you're aiming at." Example of bad: "Practice more evaluation."
+5. whyNotOneLevelHigher: ONE sentence explaining the single biggest reason you didn't put them in the next level up. Be specific to their essay.
 
-If the student describes a diagram, assess it for correct axes, curves, shifts, and equilibrium.
+TONE: Direct, warm, specific. Talk like a tutor sitting next to them — not "the candidate demonstrates" but "you've done X well, but you're missing Y". Encouraging but honest. No corporate AI phrases like "Great job!" or "Let's dive in".
 
 Return ONLY valid JSON, no preamble, no markdown fences:
-{"mark":number,"maxMark":number,"levelDescriptor":"Level X - description","whatYouDidWell":["quote exact student words","..."],"whatsMissing":["specific gap with example sentence","..."],"improvedParagraph":"rewritten weakest paragraph at A* standard","oneAction":"single concrete actionable instruction","howToReachFullMarks":["Step 1 — specific to this essay with concrete example sentence","Step 2...","Step 3..."]}
-
-RULES:
-- whatYouDidWell MUST quote exact words from the student's essay. Never generic praise.
-- whatsMissing must name the specific missing argument and give a concrete example sentence of what should be there.
-- If the essay is weak, be encouraging first, then honest.
-- Never mention content not on the stated exam board's spec.
-- oneAction must be immediately actionable, not vague.
-- howToReachFullMarks: ordered by impact (highest-mark improvement first), max 4 steps. Each step MUST reference something specific from THIS student's essay (quote or paraphrase their actual content) and say exactly what to add, rewrite, or extend with a concrete example sentence. Plain English, no unexplained examiner jargon. Should read like a tutor saying "to get to ${data.markAllocation}/${data.markAllocation}, here's exactly what to do". If already at full marks, return an empty array.`;
+{"mark":number,"maxMark":${data.markAllocation},"levelDescriptor":"Level X — short name","whyNotOneLevelHigher":"single sentence explaining the gap to the next level up","whatYouDidWell":["point quoting student's exact words","..."],"whatsMissing":["specific named missing argument with example","..."],"paragraphTransformation":{"original":"verbatim quote of the student's weakest paragraph","improved":"A* rewrite with specific economic content added"},"threeActionsBeforeNext":["Action 1 — concrete","Action 2 — concrete","Action 3 — concrete"]}`;
 
     let res: Response;
     try {
@@ -108,9 +120,9 @@ RULES:
           model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: "Please mark this essay now and return only JSON." },
+            { role: "user", content: "Mark this essay now. Return only JSON matching the schema." },
           ],
-          max_tokens: 2000,
+          max_tokens: 2500,
         }),
       });
     } catch (err) {
@@ -169,14 +181,20 @@ export const getEssayUsage = createServerFn({ method: "GET" })
       .eq("id", userId)
       .maybeSingle();
     const plan = profile?.plan ?? "free";
-    let used = 0;
+    if (plan === "free") {
+      const { count } = await supabase
+        .from("essay_submissions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId);
+      return { plan, used: count ?? 0, limit: 1 };
+    }
     if (plan === "monthly") {
       const { count } = await supabase
         .from("essay_submissions")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
         .gte("submitted_at", startOfMonthISO());
-      used = count ?? 0;
+      return { plan, used: count ?? 0, limit: 10 };
     }
-    return { plan, used, limit: plan === "monthly" ? 10 : null };
+    return { plan, used: 0, limit: null };
   });

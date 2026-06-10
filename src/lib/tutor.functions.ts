@@ -47,10 +47,10 @@ export const sendTutorMessage = createServerFn({ method: "POST" })
         const msgs = Array.isArray(c.messages) ? (c.messages as TutorMessage[]) : [];
         return acc + msgs.filter((m) => m.role === "user" && m.timestamp >= since).length;
       }, 0);
-      if (used >= 3) {
-        return { ok: false, error: "You've used your 3 free messages for today. Upgrade for unlimited.", upgrade: true };
+      if (used >= 5) {
+        return { ok: false, error: "You've used your 5 free messages for today. Upgrade for unlimited.", upgrade: true };
       }
-      remaining = 3 - used - 1;
+      remaining = 5 - used - 1;
     }
 
     let conversationId = data.conversationId;
@@ -198,5 +198,5 @@ export const getTutorUsage = createServerFn({ method: "GET" })
         return acc + msgs.filter((m) => m.role === "user" && m.timestamp >= since).length;
       }, 0);
     }
-    return { plan, used, limit: plan === "free" ? 3 : null };
+    return { plan, used, limit: plan === "free" ? 5 : null };
   });
