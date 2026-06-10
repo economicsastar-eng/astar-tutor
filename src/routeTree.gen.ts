@@ -23,6 +23,7 @@ import { Route as AuthenticatedTutorRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
 import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated/progress'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedFlashcardsRouteImport } from './routes/_authenticated/flashcards'
 import { Route as AuthenticatedEssayMarkerRouteImport } from './routes/_authenticated/essay-marker'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
@@ -99,6 +100,11 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFlashcardsRoute = AuthenticatedFlashcardsRouteImport.update({
+  id: '/flashcards',
+  path: '/flashcards',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEssayMarkerRoute =
   AuthenticatedEssayMarkerRouteImport.update({
     id: '/essay-marker',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AuthenticatedAccountRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/essay-marker': typeof AuthenticatedEssayMarkerRoute
+  '/flashcards': typeof AuthenticatedFlashcardsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/review': typeof AuthenticatedReviewRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/account': typeof AuthenticatedAccountRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/essay-marker': typeof AuthenticatedEssayMarkerRoute
+  '/flashcards': typeof AuthenticatedFlashcardsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/review': typeof AuthenticatedReviewRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/essay-marker': typeof AuthenticatedEssayMarkerRoute
+  '/_authenticated/flashcards': typeof AuthenticatedFlashcardsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/dashboard'
     | '/essay-marker'
+    | '/flashcards'
     | '/onboarding'
     | '/progress'
     | '/review'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/dashboard'
     | '/essay-marker'
+    | '/flashcards'
     | '/onboarding'
     | '/progress'
     | '/review'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/_authenticated/account'
     | '/_authenticated/dashboard'
     | '/_authenticated/essay-marker'
+    | '/_authenticated/flashcards'
     | '/_authenticated/onboarding'
     | '/_authenticated/progress'
     | '/_authenticated/review'
@@ -380,6 +392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/flashcards': {
+      id: '/_authenticated/flashcards'
+      path: '/flashcards'
+      fullPath: '/flashcards'
+      preLoaderRoute: typeof AuthenticatedFlashcardsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/essay-marker': {
       id: '/_authenticated/essay-marker'
       path: '/essay-marker'
@@ -429,6 +448,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEssayMarkerRoute: typeof AuthenticatedEssayMarkerRoute
+  AuthenticatedFlashcardsRoute: typeof AuthenticatedFlashcardsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
@@ -441,6 +461,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEssayMarkerRoute: AuthenticatedEssayMarkerRoute,
+  AuthenticatedFlashcardsRoute: AuthenticatedFlashcardsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProgressRoute: AuthenticatedProgressRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,

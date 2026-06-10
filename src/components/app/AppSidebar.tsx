@@ -1,10 +1,10 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import type { ComponentType, SVGProps } from "react";
-import { Home, BookOpen, Brain, PenLine, MessageCircle, TrendingUp, Settings, MessagesSquare } from "lucide-react";
+import { Home, BookOpen, Brain, PenLine, MessageCircle, TrendingUp, Settings, MessagesSquare, Layers } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type NavItem = {
-  to: "/dashboard" | "/course" | "/review" | "/essay-marker" | "/tutor" | "/progress" | "/account";
+  to: "/dashboard" | "/course" | "/review" | "/flashcards" | "/essay-marker" | "/tutor" | "/progress" | "/account";
   label: string;
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
   badge?: boolean;
@@ -13,6 +13,7 @@ type NavItem = {
 const items: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", Icon: Home },
   { to: "/course", label: "Course", Icon: BookOpen },
+  { to: "/flashcards", label: "Flashcards", Icon: Layers },
   { to: "/review", label: "Review", Icon: Brain, badge: true },
   { to: "/essay-marker", label: "Essay Marker", Icon: PenLine },
   { to: "/tutor", label: "Tutor", Icon: MessageCircle },
