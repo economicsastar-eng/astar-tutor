@@ -444,6 +444,29 @@ function DashboardPage() {
             </div>
           )}
 
+          {/* Flashcards due widget */}
+          {flashcardsDue > 0 && (
+            <div className="rounded-xl bg-[#1a2744] border border-white/5 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+              <Layers className="size-6 text-emerald shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-display font-semibold text-white">
+                  {flashcardsDue} flashcard{flashcardsDue === 1 ? "" : "s"} due today
+                </h3>
+                <p className="text-sm text-slate-400 mt-0.5">
+                  Quick spaced-repetition review keeps definitions sharp.
+                </p>
+              </div>
+              <Button
+                asChild
+                className="bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold shrink-0"
+              >
+                <Link to="/flashcards">Start reviewing</Link>
+              </Button>
+            </div>
+          )}
+
+
+
           {/* Weakest topics */}
           <div>
             <h3 className="font-display font-semibold text-white mb-3">Your Weakest Topics</h3>
