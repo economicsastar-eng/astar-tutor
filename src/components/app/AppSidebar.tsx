@@ -13,8 +13,8 @@ type NavItem = {
 const items: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", Icon: Home },
   { to: "/course", label: "Course", Icon: BookOpen },
-  { to: "/review", label: "Review", Icon: Brain, badge: true },
   { to: "/flashcards", label: "Flashcards", Icon: Layers },
+  { to: "/review", label: "Review", Icon: Brain, badge: true },
   { to: "/essay-marker", label: "Essay Marker", Icon: PenLine },
   { to: "/tutor", label: "Tutor", Icon: MessageCircle },
   { to: "/progress", label: "Progress", Icon: TrendingUp },
