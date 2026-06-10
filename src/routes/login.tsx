@@ -15,13 +15,17 @@ export const Route = createFileRoute("/login")({
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function mapAuthError(message: string): { form?: string; email?: string; password?: string } {
+function mapAuthError(message: string): { form?: string } {
   const m = message.toLowerCase();
-  if (m.includes("invalid login") || m.includes("invalid credentials")) {
+  // Never differentiate "wrong password", "unknown email", or "email not confirmed"
+  // — all three would let an attacker enumerate registered accounts.
+  if (
+    m.includes("invalid login") ||
+    m.includes("invalid credentials") ||
+    m.includes("email not confirmed") ||
+    m.includes("user not found")
+  ) {
     return { form: "Incorrect email or password. Please try again." };
-  }
-  if (m.includes("email not confirmed")) {
-    return { email: "Please confirm your email before logging in. Check your inbox." };
   }
   if (m.includes("rate") || m.includes("too many")) {
     return { form: "Too many attempts. Please wait a moment and try again." };
@@ -29,7 +33,8 @@ function mapAuthError(message: string): { form?: string; email?: string; passwor
   if (m.includes("network") || m.includes("fetch")) {
     return { form: "Network error. Check your connection and try again." };
   }
-  return { form: message };
+  // Fallback: generic message — do not surface raw provider strings that may hint at account state.
+  return { form: "Couldn't log you in. Please check your details and try again." };
 }
 
 function LoginPage() {
