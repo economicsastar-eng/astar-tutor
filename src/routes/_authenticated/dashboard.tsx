@@ -108,6 +108,7 @@ function DashboardPage() {
   });
   const [cont, setCont] = useState<ContinueLesson | null>(null);
   const [weakTopics, setWeakTopics] = useState<WeakTopic[]>([]);
+  const [flashcardsDue, setFlashcardsDue] = useState(0);
 
   useEffect(() => {
     (async () => {
