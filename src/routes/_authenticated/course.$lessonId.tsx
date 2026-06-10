@@ -80,31 +80,57 @@ function LessonPlayer() {
         return;
       }
 
-      const [{ data: bls }, { data: qs }, { data: prog }] = await Promise.all([
-        supabase
-          .from("lesson_blocks")
-          .select("id,block_type,sort_order,content_markdown,summary_points,key_terms")
-          .eq("lesson_id", les.id)
-          .order("sort_order"),
-        supabase
-          .from("quiz_questions")
-          .select(
-            "id,lesson_block_id,question_text,option_a,option_b,option_c,option_d,correct_option,explanation",
-          )
-          .eq("lesson_id", les.id),
-        supabase
-          .from("lesson_progress")
-          .select("current_block_order")
-          .eq("user_id", uid)
-          .eq("lesson_id", les.id)
-          .maybeSingle(),
-      ]);
+      const [{ data: bls }, { data: qs }, { data: prog }, { data: attempts }, { data: done }] =
+        await Promise.all([
+          supabase
+            .from("lesson_blocks")
+            .select("id,block_type,sort_order,content_markdown,summary_points,key_terms")
+            .eq("lesson_id", les.id)
+            .order("sort_order"),
+          supabase
+            .from("quiz_questions")
+            .select(
+              "id,lesson_block_id,question_text,option_a,option_b,option_c,option_d,correct_option,explanation",
+            )
+            .eq("lesson_id", les.id),
+          supabase
+            .from("lesson_progress")
+            .select("current_block_order")
+            .eq("user_id", uid)
+            .eq("lesson_id", les.id)
+            .maybeSingle(),
+          supabase
+            .from("quiz_attempts")
+            .select("question_id,is_correct,attempted_at")
+            .eq("user_id", uid)
+            .eq("lesson_id", les.id)
+            .order("attempted_at", { ascending: true }),
+          supabase
+            .from("lesson_completions")
+            .select("score_percent")
+            .eq("user_id", uid)
+            .eq("lesson_id", les.id)
+            .maybeSingle(),
+        ]);
 
       if (cancel) return;
       setLesson(les as Lesson);
-      setBlocks((bls ?? []) as Block[]);
+      const blocksList = (bls ?? []) as Block[];
+      setBlocks(blocksList);
       setQuestions((qs ?? []) as Question[]);
-      const resumeAt = Math.min(prog?.current_block_order ?? 0, (bls?.length ?? 1) - 1);
+
+      // Seed prior answers (latest attempt per question wins) so completion scoring
+      // reflects everything the learner has done across sessions.
+      const prior: Record<string, boolean> = {};
+      for (const a of (attempts ?? []) as { question_id: string; is_correct: boolean }[]) {
+        prior[a.question_id] = a.is_correct;
+      }
+      setSessionAnswers(prior);
+
+      // If they previously finished, drop them at the start; otherwise resume in place.
+      const savedIndex = prog?.current_block_order ?? 0;
+      const lastIndex = Math.max(0, blocksList.length - 1);
+      const resumeAt = done ? 0 : Math.min(savedIndex, lastIndex);
       setCurrentIndex(Math.max(0, resumeAt));
       setLoading(false);
     })();
