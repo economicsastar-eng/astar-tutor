@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,8 +68,15 @@ function ForgotPasswordPage() {
         <form
           onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
           noValidate
+          aria-busy={loading}
           className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
         >
+          <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+            {sent ? `Reset link sent to ${email}` : ""}
+          </div>
+          <div role="alert" aria-live="assertive" aria-atomic="true" className="sr-only">
+            {errors.form || errors.email || ""}
+          </div>
           {sent ? (
             <div className="space-y-2 text-center">
               <p className="text-sm">
@@ -79,7 +87,7 @@ function ForgotPasswordPage() {
           ) : (
             <>
               {errors.form && (
-                <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {errors.form}
                 </div>
               )}
@@ -92,9 +100,10 @@ function ForgotPasswordPage() {
                   onChange={(e) => { setEmail(e.target.value); if (errors.email || errors.form) setErrors({}); }}
                   placeholder="you@school.com"
                   autoComplete="email"
+                  disabled={loading}
                   aria-invalid={!!errors.email}
                   aria-describedby={errors.email ? "email-error" : undefined}
-                  className={errors.email ? "border-destructive focus-visible:ring-destructive" : ""}
+                  className={`min-h-11 ${errors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
                 {errors.email && (
                   <p id="email-error" className="text-xs text-destructive">{errors.email}</p>
@@ -102,10 +111,13 @@ function ForgotPasswordPage() {
               </div>
               <Button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-emerald hover:bg-emerald-hover text-white font-semibold"
+                disabled={loading || !email.trim()}
+                aria-disabled={loading || !email.trim()}
+                className="w-full min-h-11 bg-emerald hover:bg-emerald-hover text-white font-semibold"
               >
-                {loading ? "Sending…" : "Send reset link"}
+                {loading ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /><span>Sending…</span></>
+                ) : "Send reset link"}
               </Button>
             </>
           )}
