@@ -17,6 +17,7 @@ type Lesson = {
   title: string;
   slug: string;
   section_id: string;
+  themeNumber?: number;
 };
 type Block = {
   id: string;
@@ -48,6 +49,7 @@ function LessonPlayer() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [locked, setLocked] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [completed, setCompleted] = useState<{ score: number; total: number } | null>(null);
 
@@ -69,12 +71,30 @@ function LessonPlayer() {
 
       const { data: les } = await supabase
         .from("lessons")
-        .select("id,title,slug,section_id")
+        .select("id,title,slug,section_id,sections(theme_number)")
         .eq("slug", lessonId)
         .maybeSingle();
       if (!les) {
         if (!cancel) {
           setNotFound(true);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const themeNumber = (les as { sections?: { theme_number?: number } }).sections?.theme_number ?? 1;
+
+      // Paywall: free plan only gets Theme 1
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("plan")
+        .eq("id", uid)
+        .maybeSingle();
+      const plan = prof?.plan ?? "free";
+      if (plan === "free" && themeNumber > 1) {
+        if (!cancel) {
+          setLesson({ ...(les as Lesson), themeNumber });
+          setLocked(true);
           setLoading(false);
         }
         return;
