@@ -83,6 +83,98 @@ export type Database = {
         }
         Relationships: []
       }
+      flashcard_progress: {
+        Row: {
+          card_id: string
+          created_at: string
+          ease_factor: number
+          id: string
+          interval_days: number
+          last_rating: string | null
+          last_reviewed_at: string | null
+          next_due_at: string
+          repetitions: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          last_rating?: string | null
+          last_reviewed_at?: string | null
+          next_due_at?: string
+          repetitions?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          last_rating?: string | null
+          last_reviewed_at?: string | null
+          next_due_at?: string
+          repetitions?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_progress_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "flashcards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flashcards: {
+        Row: {
+          answer: string
+          card_type: string
+          created_at: string
+          difficulty_base: number
+          id: string
+          question: string
+          real_world_example: string | null
+          spec_ref: string
+          subtopic_name: string
+          theme_number: number
+          topic_name: string
+        }
+        Insert: {
+          answer: string
+          card_type: string
+          created_at?: string
+          difficulty_base: number
+          id?: string
+          question: string
+          real_world_example?: string | null
+          spec_ref: string
+          subtopic_name: string
+          theme_number: number
+          topic_name: string
+        }
+        Update: {
+          answer?: string
+          card_type?: string
+          created_at?: string
+          difficulty_base?: number
+          id?: string
+          question?: string
+          real_world_example?: string | null
+          spec_ref?: string
+          subtopic_name?: string
+          theme_number?: number
+          topic_name?: string
+        }
+        Relationships: []
+      }
       lesson_blocks: {
         Row: {
           block_type: string
