@@ -247,6 +247,7 @@ export type Database = {
           longest_streak: number
           name: string
           onboarded: boolean
+          onboarding_complete: boolean
           onboarding_completed: boolean
           phone_number: string | null
           phone_verified: boolean
@@ -256,6 +257,7 @@ export type Database = {
           stripe_subscription_id: string | null
           target_grade: string
           updated_at: string
+          weekly_hours: string | null
           year_group: string
         }
         Insert: {
@@ -269,6 +271,7 @@ export type Database = {
           longest_streak?: number
           name?: string
           onboarded?: boolean
+          onboarding_complete?: boolean
           onboarding_completed?: boolean
           phone_number?: string | null
           phone_verified?: boolean
@@ -278,6 +281,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           target_grade?: string
           updated_at?: string
+          weekly_hours?: string | null
           year_group?: string
         }
         Update: {
@@ -291,6 +295,7 @@ export type Database = {
           longest_streak?: number
           name?: string
           onboarded?: boolean
+          onboarding_complete?: boolean
           onboarding_completed?: boolean
           phone_number?: string | null
           phone_verified?: boolean
@@ -300,6 +305,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           target_grade?: string
           updated_at?: string
+          weekly_hours?: string | null
           year_group?: string
         }
         Relationships: []
