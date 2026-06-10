@@ -12,18 +12,49 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function mapAuthError(message: string): { form?: string; email?: string; password?: string } {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login") || m.includes("invalid credentials")) {
+    return { form: "Incorrect email or password. Please try again." };
+  }
+  if (m.includes("email not confirmed")) {
+    return { email: "Please confirm your email before logging in. Check your inbox." };
+  }
+  if (m.includes("rate") || m.includes("too many")) {
+    return { form: "Too many attempts. Please wait a moment and try again." };
+  }
+  if (m.includes("network") || m.includes("fetch")) {
+    return { form: "Network error. Check your connection and try again." };
+  }
+  return { form: message };
+}
+
 function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
+
+  const validate = () => {
+    const next: { email?: string; password?: string } = {};
+    if (!email.trim()) next.email = "Email is required";
+    else if (!EMAIL_RE.test(email.trim())) next.email = "Enter a valid email address";
+    if (!password) next.password = "Password is required";
+    else if (password.length < 6) next.password = "Password must be at least 6 characters";
+    return next;
+  };
 
   const onSubmit = async () => {
-    if (!email.trim() || !password) {
-      toast.error("Please enter your email and password");
+    const v = validate();
+    if (v.email || v.password) {
+      setErrors(v);
       return;
     }
+    setErrors({});
 
     (supabase.auth as any).storage = rememberMe ? localStorage : sessionStorage;
 
@@ -35,7 +66,9 @@ function LoginPage() {
     setLoading(false);
     if (error) {
       (supabase.auth as any).storage = localStorage;
-      toast.error(error.message);
+      const mapped = mapAuthError(error.message);
+      setErrors(mapped);
+      if (mapped.form) toast.error(mapped.form);
       return;
     }
     navigate({ to: "/dashboard" });
@@ -52,10 +85,35 @@ function LoginPage() {
           </div>
         </div>
 
-        <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <form
+          onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+          noValidate
+          className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
+        >
+          {errors.form && (
+            <div
+              role="alert"
+              className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              {errors.form}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@school.com" autoComplete="email" />
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); if (errors.email || errors.form) setErrors((p) => ({ ...p, email: undefined, form: undefined })); }}
+              placeholder="you@school.com"
+              autoComplete="email"
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
+              className={errors.email ? "border-destructive focus-visible:ring-destructive" : ""}
+            />
+            {errors.email && (
+              <p id="email-error" className="text-xs text-destructive">{errors.email}</p>
+            )}
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -64,7 +122,19 @@ function LoginPage() {
                 Forgot password?
               </Link>
             </div>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); if (errors.password || errors.form) setErrors((p) => ({ ...p, password: undefined, form: undefined })); }}
+              autoComplete="current-password"
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "password-error" : undefined}
+              className={errors.password ? "border-destructive focus-visible:ring-destructive" : ""}
+            />
+            {errors.password && (
+              <p id="password-error" className="text-xs text-destructive">{errors.password}</p>
+            )}
           </div>
 
           <label className="flex items-center gap-3 cursor-pointer group">
