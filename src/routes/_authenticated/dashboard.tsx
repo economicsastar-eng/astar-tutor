@@ -273,6 +273,21 @@ function DashboardPage() {
         setWeakTopics([]);
       }
 
+      // Flashcards due (unseen + due progress)
+      const [{ count: totalFlashcards }, { data: fcProgress }] = await Promise.all([
+        supabase.from("flashcards").select("id", { count: "exact", head: true }),
+        supabase
+          .from("flashcard_progress")
+          .select("card_id,next_due_at")
+          .eq("user_id", userId),
+      ]);
+      const seenIds = new Set((fcProgress ?? []).map((r: any) => r.card_id));
+      const dueSeen = (fcProgress ?? []).filter(
+        (r: any) => new Date(r.next_due_at).getTime() <= Date.now(),
+      ).length;
+      const unseen = Math.max(0, (totalFlashcards ?? 0) - seenIds.size);
+      setFlashcardsDue(dueSeen + unseen);
+
       setStats({
         streak: profile?.current_streak ?? 0,
         predictedGrade: grade.grade,
