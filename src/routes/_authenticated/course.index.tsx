@@ -251,19 +251,11 @@ function LessonRow({ state, onTestOut }: { state: LessonState; onTestOut: () => 
   const statusBadge = () => {
     if (status === "completed")
       return (
-        <span className="inline-flex items-center gap-1 text-emerald text-xs font-medium">
-          <CheckCircle2 className="size-3.5" /> Completed
-        </span>
+        <CheckCircle2 className="size-4 text-emerald shrink-0" aria-label="Completed" />
       );
     if (status === "in_progress")
       return <span className="text-gold text-xs font-medium">In progress</span>;
-    if (status === "locked")
-      return (
-        <span className="inline-flex items-center gap-1 text-slate-500 text-xs font-medium">
-          <Lock className="size-3.5" /> Locked
-        </span>
-      );
-    return <span className="text-slate-400 text-xs font-medium">Available</span>;
+    return null;
   };
 
   const hasContent = blockCount > 0;
@@ -272,8 +264,8 @@ function LessonRow({ state, onTestOut }: { state: LessonState; onTestOut: () => 
     <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <h4 className="font-display font-semibold text-white truncate">{lesson.title}</h4>
           {statusBadge()}
+          <h4 className="font-display font-semibold text-white truncate">{lesson.title}</h4>
         </div>
         <p className="text-xs text-slate-400 mt-1">
           {lesson.estimated_minutes} min{lesson.spec_reference ? ` • ${lesson.spec_reference}` : ""}
@@ -315,12 +307,19 @@ function LessonRow({ state, onTestOut }: { state: LessonState; onTestOut: () => 
           </Button>
         )}
         {status === "locked" && (
-          <span className="text-xs text-slate-500">Complete previous lesson</span>
+          <Link
+            to="/account"
+            title="Upgrade to unlock"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-gold"
+          >
+            <Lock className="size-3.5" /> Upgrade to unlock
+          </Link>
         )}
       </div>
     </div>
   );
 }
+
 
 type TestQ = {
   id: string;
