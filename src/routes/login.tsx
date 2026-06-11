@@ -62,8 +62,6 @@ function LoginPage() {
     }
     setErrors({});
 
-    (supabase.auth as any).storage = rememberMe ? localStorage : sessionStorage;
-
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -71,7 +69,6 @@ function LoginPage() {
     });
     setLoading(false);
     if (error) {
-      (supabase.auth as any).storage = localStorage;
       const mapped = mapAuthError(error.message);
       setErrors(mapped);
       if (mapped.form) toast.error(mapped.form);
