@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { setRememberMe } from "@/lib/auth-persistence";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,8 +75,10 @@ function LoginPage() {
       if (mapped.form) toast.error(mapped.form);
       return;
     }
+    setRememberMe(rememberMe);
     navigate({ to: "/dashboard" });
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
