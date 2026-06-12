@@ -28,6 +28,7 @@ import { Route as AuthenticatedEssayMarkerRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedCourseIndexRouteImport } from './routes/_authenticated/course.index'
+import { Route as AuthenticatedFlashcardsCoverageRouteImport } from './routes/_authenticated/flashcards_.coverage'
 import { Route as AuthenticatedCourseLessonIdRouteImport } from './routes/_authenticated/course.$lessonId'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -127,6 +128,12 @@ const AuthenticatedCourseIndexRoute =
     path: '/course/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFlashcardsCoverageRoute =
+  AuthenticatedFlashcardsCoverageRouteImport.update({
+    id: '/flashcards_/coverage',
+    path: '/flashcards/coverage',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCourseLessonIdRoute =
   AuthenticatedCourseLessonIdRouteImport.update({
     id: '/course/$lessonId',
@@ -159,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/checkout/start': typeof CheckoutStartRoute
   '/lessons/$slug': typeof LessonsSlugRoute
   '/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
+  '/flashcards/coverage': typeof AuthenticatedFlashcardsCoverageRoute
   '/course/': typeof AuthenticatedCourseIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -181,6 +189,7 @@ export interface FileRoutesByTo {
   '/checkout/start': typeof CheckoutStartRoute
   '/lessons/$slug': typeof LessonsSlugRoute
   '/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
+  '/flashcards/coverage': typeof AuthenticatedFlashcardsCoverageRoute
   '/course': typeof AuthenticatedCourseIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -205,6 +214,7 @@ export interface FileRoutesById {
   '/checkout/start': typeof CheckoutStartRoute
   '/lessons/$slug': typeof LessonsSlugRoute
   '/_authenticated/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
+  '/_authenticated/flashcards_/coverage': typeof AuthenticatedFlashcardsCoverageRoute
   '/_authenticated/course/': typeof AuthenticatedCourseIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/checkout/start'
     | '/lessons/$slug'
     | '/course/$lessonId'
+    | '/flashcards/coverage'
     | '/course/'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/checkout/start'
     | '/lessons/$slug'
     | '/course/$lessonId'
+    | '/flashcards/coverage'
     | '/course'
     | '/api/public/payments/webhook'
   id:
@@ -274,6 +286,7 @@ export interface FileRouteTypes {
     | '/checkout/start'
     | '/lessons/$slug'
     | '/_authenticated/course/$lessonId'
+    | '/_authenticated/flashcards_/coverage'
     | '/_authenticated/course/'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -427,6 +440,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCourseIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/flashcards_/coverage': {
+      id: '/_authenticated/flashcards_/coverage'
+      path: '/flashcards/coverage'
+      fullPath: '/flashcards/coverage'
+      preLoaderRoute: typeof AuthenticatedFlashcardsCoverageRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/course/$lessonId': {
       id: '/_authenticated/course/$lessonId'
       path: '/course/$lessonId'
@@ -454,6 +474,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
   AuthenticatedTutorRoute: typeof AuthenticatedTutorRoute
   AuthenticatedCourseLessonIdRoute: typeof AuthenticatedCourseLessonIdRoute
+  AuthenticatedFlashcardsCoverageRoute: typeof AuthenticatedFlashcardsCoverageRoute
   AuthenticatedCourseIndexRoute: typeof AuthenticatedCourseIndexRoute
 }
 
@@ -467,6 +488,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
   AuthenticatedTutorRoute: AuthenticatedTutorRoute,
   AuthenticatedCourseLessonIdRoute: AuthenticatedCourseLessonIdRoute,
+  AuthenticatedFlashcardsCoverageRoute: AuthenticatedFlashcardsCoverageRoute,
   AuthenticatedCourseIndexRoute: AuthenticatedCourseIndexRoute,
 }
 
