@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/app/AppLayout";
 import { ArrowLeft, CheckCircle2, AlertCircle, Circle } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/flashcards/coverage")({
+export const Route = createFileRoute("/_authenticated/flashcards_/coverage")({
   head: () => ({ meta: [{ title: "Spec Coverage — EconAStar" }] }),
   component: CoveragePage,
 });
