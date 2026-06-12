@@ -319,20 +319,20 @@ function FlashcardsPage() {
 
             {/* Theme accordions */}
             <div className="space-y-3">
-              {THEMES.map((theme) => {
-                const open = openThemes.has(theme.number);
-                const colors = THEME_COLORS[theme.number];
-                const themeCardCount = cards.filter((c) => c.theme_number === theme.number).length;
+              {SECTIONS.map((section) => {
+                const open = openThemes.has(section.number);
+                const colors = SECTION_COLORS[section.number];
+                const themeCardCount = cards.filter((c) => c.theme_number === section.number).length;
                 return (
                   <div
-                    key={theme.number}
+                    key={section.number}
                     className="rounded-xl bg-[#1a2744] border border-white/5 overflow-hidden"
                   >
                     <button
                       onClick={() => {
                         const next = new Set(openThemes);
-                        if (open) next.delete(theme.number);
-                        else next.add(theme.number);
+                        if (open) next.delete(section.number);
+                        else next.add(section.number);
                         setOpenThemes(next);
                       }}
                       className="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-white/5"
@@ -340,10 +340,10 @@ function FlashcardsPage() {
                       <span
                         className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${colors.chip}`}
                       >
-                        Theme {theme.number}
+                        Section {section.code}
                       </span>
                       <span className="flex-1 font-display font-semibold text-white">
-                        {theme.title}
+                        {section.title}
                       </span>
                       <span className="text-xs text-slate-400">{themeCardCount} cards</span>
                       {open ? (
@@ -354,7 +354,7 @@ function FlashcardsPage() {
                     </button>
                     {open && (
                       <div className="border-t border-white/5 divide-y divide-white/5">
-                        {theme.subtopics.map((sub) => {
+                        {section.subtopics.map((sub) => {
                           const subCards = cards.filter((c) => c.spec_ref === sub.spec);
                           const count = subCards.length;
                           let dueCount = 0;
