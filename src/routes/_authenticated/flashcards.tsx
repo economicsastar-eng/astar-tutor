@@ -266,11 +266,20 @@ function FlashcardsPage() {
   return (
     <AppLayout title="Flashcards">
       <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-display font-bold text-white">Flashcards</h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Spaced-repetition revision across the AQA A-Level Economics spec.
-          </p>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="text-2xl font-display font-bold text-white">Flashcards</h2>
+            <p className="text-sm text-slate-400 mt-1">
+              Spaced-repetition revision across the AQA A-Level Economics spec.
+            </p>
+          </div>
+          <Button
+            asChild
+            variant="outline"
+            className="border-white/10 bg-[#1a2744] text-slate-200 hover:bg-white/5 hover:text-white"
+          >
+            <Link to="/flashcards/coverage">Spec coverage →</Link>
+          </Button>
         </div>
 
         {cards.length === 0 ? (
