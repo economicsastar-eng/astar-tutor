@@ -20,64 +20,42 @@ export const Route = createFileRoute("/_authenticated/flashcards")({
 
 // ---------- Spec structure ----------
 type Subtopic = { spec: string; name: string };
-type Theme = { number: 1 | 2 | 3 | 4; title: string; subtopics: Subtopic[] };
+type Section = { number: 1 | 2; code: string; title: string; subtopics: Subtopic[] };
 
-const THEMES: Theme[] = [
+const SECTIONS: Section[] = [
   {
     number: 1,
-    title: "Markets and market failure",
+    code: "3.1",
+    title: "Individuals, firms, markets and market failure",
     subtopics: [
       { spec: "3.1.1", name: "Nature of economics" },
-      { spec: "3.1.2", name: "Demand" },
-      { spec: "3.1.3", name: "Supply" },
-      { spec: "3.1.4", name: "Price determination and elasticity" },
-      { spec: "3.1.5", name: "Market structures and competition policy" },
-      { spec: "3.1.6", name: "Labour market" },
-      { spec: "3.1.7", name: "Distribution of income and wealth" },
-      { spec: "3.1.8", name: "Market failure and government intervention" },
+      { spec: "3.1.2", name: "Individual economic decision making" },
+      { spec: "3.1.3", name: "Price determination in a competitive market" },
+      { spec: "3.1.4", name: "Production, costs and revenue" },
+      { spec: "3.1.5", name: "Perfect competition, imperfectly competitive markets and monopoly" },
+      { spec: "3.1.6", name: "The labour market" },
+      { spec: "3.1.7", name: "The distribution of income and wealth: poverty and inequality" },
+      { spec: "3.1.8", name: "The market mechanism, market failure and government intervention" },
     ],
   },
   {
     number: 2,
-    title: "The national economy",
+    code: "3.2",
+    title: "The national and international economy",
     subtopics: [
-      { spec: "3.2.1", name: "Measures of economic performance" },
-      { spec: "3.2.2", name: "Aggregate demand" },
-      { spec: "3.2.3", name: "Aggregate supply" },
-      { spec: "3.2.4", name: "National income and the multiplier" },
-      { spec: "3.2.5", name: "Economic growth" },
-      { spec: "3.2.6", name: "Macroeconomic objectives and policy" },
-    ],
-  },
-  {
-    number: 3,
-    title: "Business behaviour and the labour market",
-    subtopics: [
-      { spec: "3.3.1", name: "Business objectives and growth" },
-      { spec: "3.3.2", name: "Costs, revenues and profit" },
-      { spec: "3.3.3", name: "Market structures (detailed)" },
-      { spec: "3.3.4", name: "Labour market (A2)" },
-      { spec: "3.3.5", name: "Government intervention" },
-    ],
-  },
-  {
-    number: 4,
-    title: "A global perspective",
-    subtopics: [
-      { spec: "3.4.1", name: "International trade and globalisation" },
-      { spec: "3.4.2", name: "Poverty and inequality" },
-      { spec: "3.4.3", name: "Emerging and developing economies" },
-      { spec: "3.4.4", name: "Financial markets and monetary policy" },
-      { spec: "3.4.5", name: "Role of the state in the macroeconomy" },
+      { spec: "3.2.1", name: "The measurement of macroeconomic performance" },
+      { spec: "3.2.2", name: "How the macroeconomy works: AD/AS analysis" },
+      { spec: "3.2.3", name: "Economic performance" },
+      { spec: "3.2.4", name: "Financial markets and monetary policy" },
+      { spec: "3.2.5", name: "Fiscal policy and supply-side policies" },
+      { spec: "3.2.6", name: "The international economy" },
     ],
   },
 ];
 
-const THEME_COLORS: Record<number, { dot: string; chip: string }> = {
+const SECTION_COLORS: Record<number, { dot: string; chip: string }> = {
   1: { dot: "bg-teal-500", chip: "bg-teal-500/15 text-teal-300 border-teal-500/30" },
   2: { dot: "bg-blue-500", chip: "bg-blue-500/15 text-blue-300 border-blue-500/30" },
-  3: { dot: "bg-amber-500", chip: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
-  4: { dot: "bg-purple-500", chip: "bg-purple-500/15 text-purple-300 border-purple-500/30" },
 };
 
 // ---------- Types ----------
