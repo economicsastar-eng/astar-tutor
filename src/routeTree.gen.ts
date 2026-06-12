@@ -28,7 +28,7 @@ import { Route as AuthenticatedEssayMarkerRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedCourseIndexRouteImport } from './routes/_authenticated/course.index'
-import { Route as AuthenticatedFlashcardsCoverageRouteImport } from './routes/_authenticated/flashcards.coverage'
+import { Route as AuthenticatedFlashcardsCoverageRouteImport } from './routes/_authenticated/flashcards_.coverage'
 import { Route as AuthenticatedCourseLessonIdRouteImport } from './routes/_authenticated/course.$lessonId'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -130,9 +130,9 @@ const AuthenticatedCourseIndexRoute =
   } as any)
 const AuthenticatedFlashcardsCoverageRoute =
   AuthenticatedFlashcardsCoverageRouteImport.update({
-    id: '/coverage',
-    path: '/coverage',
-    getParentRoute: () => AuthenticatedFlashcardsRoute,
+    id: '/flashcards_/coverage',
+    path: '/flashcards/coverage',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCourseLessonIdRoute =
   AuthenticatedCourseLessonIdRouteImport.update({
@@ -157,7 +157,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AuthenticatedAccountRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/essay-marker': typeof AuthenticatedEssayMarkerRoute
-  '/flashcards': typeof AuthenticatedFlashcardsRouteWithChildren
+  '/flashcards': typeof AuthenticatedFlashcardsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/review': typeof AuthenticatedReviewRoute
@@ -180,7 +180,7 @@ export interface FileRoutesByTo {
   '/account': typeof AuthenticatedAccountRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/essay-marker': typeof AuthenticatedEssayMarkerRoute
-  '/flashcards': typeof AuthenticatedFlashcardsRouteWithChildren
+  '/flashcards': typeof AuthenticatedFlashcardsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/review': typeof AuthenticatedReviewRoute
@@ -205,7 +205,7 @@ export interface FileRoutesById {
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/essay-marker': typeof AuthenticatedEssayMarkerRoute
-  '/_authenticated/flashcards': typeof AuthenticatedFlashcardsRouteWithChildren
+  '/_authenticated/flashcards': typeof AuthenticatedFlashcardsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
@@ -214,7 +214,7 @@ export interface FileRoutesById {
   '/checkout/start': typeof CheckoutStartRoute
   '/lessons/$slug': typeof LessonsSlugRoute
   '/_authenticated/course/$lessonId': typeof AuthenticatedCourseLessonIdRoute
-  '/_authenticated/flashcards/coverage': typeof AuthenticatedFlashcardsCoverageRoute
+  '/_authenticated/flashcards_/coverage': typeof AuthenticatedFlashcardsCoverageRoute
   '/_authenticated/course/': typeof AuthenticatedCourseIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -286,7 +286,7 @@ export interface FileRouteTypes {
     | '/checkout/start'
     | '/lessons/$slug'
     | '/_authenticated/course/$lessonId'
-    | '/_authenticated/flashcards/coverage'
+    | '/_authenticated/flashcards_/coverage'
     | '/_authenticated/course/'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -440,12 +440,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCourseIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/flashcards/coverage': {
-      id: '/_authenticated/flashcards/coverage'
-      path: '/coverage'
+    '/_authenticated/flashcards_/coverage': {
+      id: '/_authenticated/flashcards_/coverage'
+      path: '/flashcards/coverage'
       fullPath: '/flashcards/coverage'
       preLoaderRoute: typeof AuthenticatedFlashcardsCoverageRouteImport
-      parentRoute: typeof AuthenticatedFlashcardsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/course/$lessonId': {
       id: '/_authenticated/course/$lessonId'
@@ -464,30 +464,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedFlashcardsRouteChildren {
-  AuthenticatedFlashcardsCoverageRoute: typeof AuthenticatedFlashcardsCoverageRoute
-}
-
-const AuthenticatedFlashcardsRouteChildren: AuthenticatedFlashcardsRouteChildren =
-  {
-    AuthenticatedFlashcardsCoverageRoute: AuthenticatedFlashcardsCoverageRoute,
-  }
-
-const AuthenticatedFlashcardsRouteWithChildren =
-  AuthenticatedFlashcardsRoute._addFileChildren(
-    AuthenticatedFlashcardsRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEssayMarkerRoute: typeof AuthenticatedEssayMarkerRoute
-  AuthenticatedFlashcardsRoute: typeof AuthenticatedFlashcardsRouteWithChildren
+  AuthenticatedFlashcardsRoute: typeof AuthenticatedFlashcardsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
   AuthenticatedTutorRoute: typeof AuthenticatedTutorRoute
   AuthenticatedCourseLessonIdRoute: typeof AuthenticatedCourseLessonIdRoute
+  AuthenticatedFlashcardsCoverageRoute: typeof AuthenticatedFlashcardsCoverageRoute
   AuthenticatedCourseIndexRoute: typeof AuthenticatedCourseIndexRoute
 }
 
@@ -495,12 +482,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEssayMarkerRoute: AuthenticatedEssayMarkerRoute,
-  AuthenticatedFlashcardsRoute: AuthenticatedFlashcardsRouteWithChildren,
+  AuthenticatedFlashcardsRoute: AuthenticatedFlashcardsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProgressRoute: AuthenticatedProgressRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
   AuthenticatedTutorRoute: AuthenticatedTutorRoute,
   AuthenticatedCourseLessonIdRoute: AuthenticatedCourseLessonIdRoute,
+  AuthenticatedFlashcardsCoverageRoute: AuthenticatedFlashcardsCoverageRoute,
   AuthenticatedCourseIndexRoute: AuthenticatedCourseIndexRoute,
 }
 
@@ -523,3 +511,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
