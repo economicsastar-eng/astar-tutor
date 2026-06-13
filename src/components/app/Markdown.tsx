@@ -1,141 +1,88 @@
-import type React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-// Lightweight markdown renderer for lesson content.
-// Supports: # / ## / ### headings, **bold**, *italic*, `code`,
-// unordered lists (- ), blockquotes (> ), and paragraphs.
-// Intentionally minimal so we don't ship a full markdown dep.
-
-function renderInline(text: string): React.ReactNode[] {
-  const nodes: React.ReactNode[] = [];
-  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  let key = 0;
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
-    const token = match[0];
-    if (token.startsWith("**")) {
-      nodes.push(
-        <strong key={key++} className="text-white font-semibold">
-          {token.slice(2, -2)}
-        </strong>,
-      );
-    } else if (token.startsWith("`")) {
-      nodes.push(
-        <code
-          key={key++}
-          className="px-1.5 py-0.5 rounded bg-white/10 text-emerald font-mono text-[0.9em]"
-        >
-          {token.slice(1, -1)}
-        </code>,
-      );
-    } else {
-      nodes.push(
-        <em key={key++} className="italic">
-          {token.slice(1, -1)}
-        </em>,
-      );
-    }
-    lastIndex = match.index + token.length;
-  }
-  if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
-  return nodes;
-}
-
+// Markdown renderer for lesson content. Supports GitHub-Flavoured Markdown
+// (tables, task lists, strikethrough, autolinks) via remark-gfm.
 export function Markdown({ source }: { source: string }) {
-  const lines = source.replace(/\r\n/g, "\n").split("\n");
-  const blocks: React.ReactNode[] = [];
-  let i = 0;
-  let key = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    if (!line.trim()) {
-      i++;
-      continue;
-    }
-
-    if (line.startsWith("### ")) {
-      blocks.push(
-        <h3 key={key++} className="text-lg font-display font-semibold text-white mt-5 mb-2">
-          {renderInline(line.slice(4))}
-        </h3>,
-      );
-      i++;
-      continue;
-    }
-    if (line.startsWith("## ")) {
-      blocks.push(
-        <h2 key={key++} className="text-xl font-display font-bold text-white mt-6 mb-3">
-          {renderInline(line.slice(3))}
-        </h2>,
-      );
-      i++;
-      continue;
-    }
-    if (line.startsWith("# ")) {
-      blocks.push(
-        <h1 key={key++} className="text-2xl font-display font-bold text-white mt-6 mb-3">
-          {renderInline(line.slice(2))}
-        </h1>,
-      );
-      i++;
-      continue;
-    }
-
-    if (line.startsWith("> ")) {
-      const buf: string[] = [];
-      while (i < lines.length && lines[i].startsWith("> ")) {
-        buf.push(lines[i].slice(2));
-        i++;
-      }
-      blocks.push(
-        <blockquote
-          key={key++}
-          className="border-l-4 border-emerald/60 pl-4 py-1 my-4 text-slate-300 italic"
-        >
-          {renderInline(buf.join(" "))}
-        </blockquote>,
-      );
-      continue;
-    }
-
-    if (line.startsWith("- ")) {
-      const items: string[] = [];
-      while (i < lines.length && lines[i].startsWith("- ")) {
-        items.push(lines[i].slice(2));
-        i++;
-      }
-      blocks.push(
-        <ul key={key++} className="list-disc pl-6 space-y-1.5 my-3 text-slate-300">
-          {items.map((it, idx) => (
-            <li key={idx}>{renderInline(it)}</li>
-          ))}
-        </ul>,
-      );
-      continue;
-    }
-
-    // Paragraph: gather until blank line
-    const buf: string[] = [line];
-    i++;
-    while (
-      i < lines.length &&
-      lines[i].trim() &&
-      !lines[i].startsWith("#") &&
-      !lines[i].startsWith("- ") &&
-      !lines[i].startsWith("> ")
-    ) {
-      buf.push(lines[i]);
-      i++;
-    }
-    blocks.push(
-      <p key={key++} className="text-slate-300 leading-relaxed my-3">
-        {renderInline(buf.join(" "))}
-      </p>,
-    );
-  }
-
-  return <div className="text-[0.97rem]">{blocks}</div>;
+  return (
+    <div className="text-[0.97rem] text-slate-300 leading-relaxed">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ node, ...props }) => (
+            <h1 className="text-2xl font-display font-bold text-white mt-6 mb-3" {...props} />
+          ),
+          h2: ({ node, ...props }) => (
+            <h2 className="text-xl font-display font-bold text-white mt-6 mb-3" {...props} />
+          ),
+          h3: ({ node, ...props }) => (
+            <h3 className="text-lg font-display font-semibold text-white mt-5 mb-2" {...props} />
+          ),
+          p: ({ node, ...props }) => <p className="my-3" {...props} />,
+          strong: ({ node, ...props }) => (
+            <strong className="text-white font-semibold" {...props} />
+          ),
+          em: ({ node, ...props }) => <em className="italic" {...props} />,
+          code: ({ node, ...props }) => (
+            <code
+              className="px-1.5 py-0.5 rounded bg-white/10 text-emerald font-mono text-[0.9em]"
+              {...props}
+            />
+          ),
+          ul: ({ node, ...props }) => (
+            <ul className="list-disc pl-6 space-y-1.5 my-3" {...props} />
+          ),
+          ol: ({ node, ...props }) => (
+            <ol className="list-decimal pl-6 space-y-1.5 my-3" {...props} />
+          ),
+          li: ({ node, ...props }) => <li {...props} />,
+          blockquote: ({ node, ...props }) => (
+            <blockquote
+              className="border-l-4 border-emerald/60 pl-4 py-1 my-4 text-slate-300 italic"
+              {...props}
+            />
+          ),
+          a: ({ node, ...props }) => (
+            <a
+              className="text-emerald underline underline-offset-2 hover:text-emerald-hover"
+              target="_blank"
+              rel="noopener noreferrer"
+              {...props}
+            />
+          ),
+          hr: () => <hr className="my-6 border-white/10" />,
+          // GFM table styling — wrap in a horizontally scrollable container
+          // so wide comparison tables remain readable on mobile.
+          table: ({ node, ...props }) => (
+            <div className="my-4 -mx-2 overflow-x-auto">
+              <table
+                className="w-full border-collapse text-sm border border-white/15 rounded-md overflow-hidden"
+                {...props}
+              />
+            </div>
+          ),
+          thead: ({ node, ...props }) => (
+            <thead className="bg-white/10 text-white" {...props} />
+          ),
+          tbody: ({ node, ...props }) => (
+            <tbody className="[&>tr:nth-child(even)]:bg-white/[0.03]" {...props} />
+          ),
+          tr: ({ node, ...props }) => (
+            <tr className="border-b border-white/10 last:border-b-0" {...props} />
+          ),
+          th: ({ node, ...props }) => (
+            <th
+              className="text-left font-semibold px-3 py-2 border border-white/10 align-top"
+              {...props}
+            />
+          ),
+          td: ({ node, ...props }) => (
+            <td className="px-3 py-2 border border-white/10 align-top text-slate-300" {...props} />
+          ),
+        }}
+      >
+        {source}
+      </ReactMarkdown>
+    </div>
+  );
 }
