@@ -244,12 +244,10 @@ function CoursePage() {
 
       const allLessons = (lessons ?? []) as Lesson[];
 
-      // Free tier: only Theme 1 subsections (3.1.1–3.1.3) unlock.
-      const FREE_SUBSECTIONS = new Set(["3.1.1", "3.1.2", "3.1.3"]);
+      // Free tier: only Theme 1 (subsections under 3.1) unlocks.
       const isUnlocked = (l: Lesson) => {
         if (isPaid) return true;
-        const code = subsectionCode(l.spec_reference);
-        return !!code && FREE_SUBSECTIONS.has(code);
+        return !!l.spec_reference && l.spec_reference.startsWith("3.1");
       };
 
       const states: LessonState[] = allLessons.map((l) => {
