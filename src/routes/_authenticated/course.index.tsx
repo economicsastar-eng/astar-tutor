@@ -135,33 +135,28 @@ function subsectionCode(specRef: string | null | undefined): string | null {
   return `${parts[0]}.${parts[1]}.${parts[2]}`;
 }
 
-function groupLessonsBySubsection(lessons: LessonState[], themeNumber: number): Subsection[] {
+function groupLessonsBySubsection(
+  lessons: LessonState[],
+  subsectionOrder: string[],
+): Subsection[] {
   const groups = new Map<string, LessonState[]>();
-  const orphans: LessonState[] = [];
   for (const ls of lessons) {
     const code = subsectionCode(ls.lesson.spec_reference);
-    if (code && SUBSECTION_NAMES[code]) {
-      const arr = groups.get(code) ?? [];
-      arr.push(ls);
-      groups.set(code, arr);
-    } else {
-      orphans.push(ls);
-    }
+    if (!code) continue;
+    const arr = groups.get(code) ?? [];
+    arr.push(ls);
+    groups.set(code, arr);
   }
-  const order = THEME_SUBSECTION_ORDER[themeNumber] ?? Array.from(groups.keys()).sort();
   const result: Subsection[] = [];
-  for (const code of order) {
+  for (const code of subsectionOrder) {
     const subLessons = groups.get(code);
     if (!subLessons || subLessons.length === 0) continue;
     subLessons.sort((a, b) => a.lesson.sort_order - b.lesson.sort_order);
-    result.push({ code, name: SUBSECTION_NAMES[code], lessons: subLessons });
-  }
-  if (orphans.length > 0) {
-    orphans.sort((a, b) => a.lesson.sort_order - b.lesson.sort_order);
-    result.push({ code: "other", name: "Other", lessons: orphans });
+    result.push({ code, name: SUBSECTION_NAMES[code] ?? code, lessons: subLessons });
   }
   return result;
 }
+
 
 function SubsectionGroup({
   sub,
