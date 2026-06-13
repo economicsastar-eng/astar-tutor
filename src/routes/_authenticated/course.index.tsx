@@ -27,13 +27,6 @@ export const Route = createFileRoute("/_authenticated/course/")({
   component: CoursePage,
 });
 
-type Section = {
-  id: string;
-  theme_number: number;
-  title: string;
-  description: string;
-  sort_order: number;
-};
 type Lesson = {
   id: string;
   section_id: string;
