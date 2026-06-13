@@ -429,16 +429,17 @@ function LessonPlayer() {
 }
 
 function ContentBlock({ block }: { block: Block }) {
+  const keyTerms = parseKeyTerms(block.key_terms);
   return (
     <div>
       {block.content_markdown && <Markdown source={block.content_markdown} />}
-      {block.key_terms && block.key_terms.length > 0 && (
+      {keyTerms.length > 0 && (
         <div className="mt-5 rounded-lg border border-emerald/30 bg-emerald/5 p-4">
           <p className="text-xs uppercase tracking-wider text-emerald font-semibold mb-2">
             Key terms
           </p>
           <dl className="space-y-2 text-sm">
-            {block.key_terms.map((t, i) => (
+            {keyTerms.map((t, i) => (
               <div key={i}>
                 <dt className="text-white font-semibold inline">{t.term}: </dt>
                 <dd className="text-slate-300 inline">{t.definition}</dd>
