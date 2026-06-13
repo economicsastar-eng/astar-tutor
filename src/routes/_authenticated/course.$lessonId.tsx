@@ -544,23 +544,23 @@ function QuestionBlock({
   );
 }
 
-function parseKeyTerms(
-  raw: Block["key_terms"] | null,
-): { term: string; definition: string }[] {
-  if (!raw) return [];
-  const arr = Array.isArray(raw) ? raw : [];
-  return arr
-    .map((item) => {
+function parseKeyTerms(raw: unknown): { term: string; definition: string }[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item: unknown) => {
       if (typeof item === "string") {
         const idx = item.indexOf(":");
         if (idx === -1) return { term: item.trim(), definition: "" };
+        return { term: item.slice(0, idx).trim(), definition: item.slice(idx + 1).trim() };
+      }
+      if (item && typeof item === "object") {
+        const obj = item as { term?: unknown; definition?: unknown };
         return {
-          term: item.slice(0, idx).trim(),
-          definition: item.slice(idx + 1).trim(),
+          term: typeof obj.term === "string" ? obj.term : "",
+          definition: typeof obj.definition === "string" ? obj.definition : "",
         };
       }
-      const obj = item as { term?: string; definition?: string };
-      return { term: obj.term ?? "", definition: obj.definition ?? "" };
+      return { term: "", definition: "" };
     })
     .filter((t) => t.term);
 }
