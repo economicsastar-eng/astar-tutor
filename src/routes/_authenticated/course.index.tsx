@@ -73,10 +73,54 @@ const SUBSECTION_NAMES: Record<string, string> = {
   "3.2.6": "The International Economy",
 };
 
-const THEME_SUBSECTION_ORDER: Record<number, string[]> = {
-  1: ["3.1.1", "3.1.2", "3.1.3", "3.1.4", "3.1.5", "3.1.6", "3.1.7", "3.1.8"],
-  2: ["3.2.1", "3.2.2", "3.2.3", "3.2.4", "3.2.5", "3.2.6"],
+// AQA spec hierarchy: 2 top-level sections, each containing 2 themes,
+// each theme containing a fixed set of subsection codes.
+type AqaTheme = {
+  number: number;
+  title: string;
+  subsections: string[];
 };
+type AqaSection = {
+  code: string;
+  title: string;
+  themes: AqaTheme[];
+};
+
+const AQA_SECTIONS: AqaSection[] = [
+  {
+    code: "3.1",
+    title: "Individuals, Firms, Markets and Market Failure",
+    themes: [
+      {
+        number: 1,
+        title: "Markets and Market Failure",
+        subsections: ["3.1.1", "3.1.2", "3.1.3"],
+      },
+      {
+        number: 3,
+        title: "Business Behaviour & The Labour Market",
+        subsections: ["3.1.4", "3.1.5", "3.1.6", "3.1.7", "3.1.8"],
+      },
+    ],
+  },
+  {
+    code: "3.2",
+    title: "The National and International Economy",
+    themes: [
+      {
+        number: 2,
+        title: "The National Economy",
+        subsections: ["3.2.1", "3.2.2", "3.2.3"],
+      },
+      {
+        number: 4,
+        title: "A Global Perspective",
+        subsections: ["3.2.4", "3.2.5", "3.2.6"],
+      },
+    ],
+  },
+];
+
 
 type Subsection = {
   code: string;
