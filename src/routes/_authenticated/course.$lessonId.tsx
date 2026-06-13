@@ -600,6 +600,3 @@ function SummaryBlock({ block }: { block: Block }) {
     </div>
   );
 }
-    </div>
-  );
-}
