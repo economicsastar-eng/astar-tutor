@@ -205,9 +205,8 @@ function SubsectionGroup({
 
 function CoursePage() {
   const [loading, setLoading] = useState(true);
-  const [sections, setSections] = useState<Section[]>([]);
-  const [lessonsBySection, setLessonsBySection] = useState<Record<string, LessonState[]>>({});
-  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [allLessonStates, setAllLessonStates] = useState<LessonState[]>([]);
+  const [openSectionCode, setOpenSectionCode] = useState<string | null>(null);
   const [testOutLesson, setTestOutLesson] = useState<Lesson | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -219,9 +218,8 @@ function CoursePage() {
       if (!u.user) return;
       const userId = u.user.id;
 
-      const [{ data: secs }, { data: lessons }, { data: blocks }, { data: completions }, { data: progress }, { data: questions }, { data: profile }] =
+      const [{ data: lessons }, { data: blocks }, { data: completions }, { data: progress }, { data: questions }, { data: profile }] =
         await Promise.all([
-          supabase.from("sections").select("*").order("sort_order"),
           supabase.from("lessons").select("*").order("sort_order"),
           supabase.from("lesson_blocks").select("lesson_id"),
           supabase.from("lesson_completions").select("lesson_id").eq("user_id", userId),
@@ -245,21 +243,23 @@ function CoursePage() {
       (progress ?? []).forEach((p) => progressMap.set(p.lesson_id, p.current_block_order));
 
       const allLessons = (lessons ?? []) as Lesson[];
-      const sectionTheme = new Map<string, number>();
-      (secs ?? []).forEach((s) => sectionTheme.set(s.id, s.theme_number));
 
-      // Tier lock: paid users see everything; free users only get Theme 1.
-      const isUnlocked = (l: Lesson) => isPaid || sectionTheme.get(l.section_id) === 1;
+      // Free tier: only Theme 1 subsections (3.1.1–3.1.3) unlock.
+      const FREE_SUBSECTIONS = new Set(["3.1.1", "3.1.2", "3.1.3"]);
+      const isUnlocked = (l: Lesson) => {
+        if (isPaid) return true;
+        const code = subsectionCode(l.spec_reference);
+        return !!code && FREE_SUBSECTIONS.has(code);
+      };
 
-      const grouped: Record<string, LessonState[]> = {};
-      for (const l of allLessons) {
+      const states: LessonState[] = allLessons.map((l) => {
         const bc = blockCounts.get(l.id) ?? 0;
         const completed = completedSet.has(l.id);
         const cur = progressMap.get(l.id) ?? 0;
         const inProgress = !completed && cur > 0;
         const unlocked = isUnlocked(l);
         const pct = bc > 0 ? Math.min(100, Math.round((cur / bc) * 100)) : 0;
-        const state: LessonState = {
+        return {
           lesson: l,
           blockCount: bc,
           hasQuestions: questionLessons.has(l.id),
@@ -275,23 +275,22 @@ function CoursePage() {
                 ? "in_progress"
                 : "available",
         };
-        (grouped[l.section_id] ??= []).push(state);
-      }
-      for (const k of Object.keys(grouped)) {
-        grouped[k].sort((a, b) => a.lesson.sort_order - b.lesson.sort_order);
-      }
+      });
 
-      // Only show sections that have at least one lesson
-      const visibleSections = ((secs ?? []) as Section[]).filter(
-        (s) => (grouped[s.id] ?? []).length > 0,
-      );
+      setAllLessonStates(states);
 
-      setSections(visibleSections);
-      setLessonsBySection(grouped);
-      const firstActive = visibleSections.find((s) =>
-        (grouped[s.id] ?? []).some((l) => l.status === "in_progress" || l.status === "available"),
+      // Auto-open the first AQA section that still has work to do.
+      const firstActive = AQA_SECTIONS.find((sec) =>
+        states.some((s) => {
+          const code = subsectionCode(s.lesson.spec_reference);
+          if (!code) return false;
+          return (
+            sec.themes.some((t) => t.subsections.includes(code)) &&
+            (s.status === "in_progress" || s.status === "available")
+          );
+        }),
       );
-      setOpenSection((prev) => prev ?? firstActive?.id ?? visibleSections[0]?.id ?? null);
+      setOpenSectionCode((prev) => prev ?? firstActive?.code ?? AQA_SECTIONS[0].code);
       setLoading(false);
     })();
     return () => {
@@ -301,6 +300,8 @@ function CoursePage() {
 
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+
+  const hasAnyLesson = allLessonStates.length > 0;
 
   return (
     <AppLayout title="Course">
@@ -316,34 +317,40 @@ function CoursePage() {
           <div className="rounded-xl bg-[#1a2744] border border-white/5 p-8 text-center text-slate-400">
             Loading your course…
           </div>
-        ) : sections.length === 0 ? (
+        ) : !hasAnyLesson ? (
           <div className="rounded-xl bg-[#1a2744] border border-white/5 p-8 text-center text-slate-400">
             No course content yet — check back soon.
           </div>
         ) : (
           <div className="space-y-3">
-            {sections.map((s) => {
-              const lessons = lessonsBySection[s.id] ?? [];
-              const completedCount = lessons.filter((l) => l.completed).length;
-              const pct =
-                lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
-              const isOpen = openSection === s.id;
-              const subsections = groupLessonsBySubsection(lessons, s.theme_number);
+            {AQA_SECTIONS.map((sec) => {
+              // Lessons that belong to this AQA section (by subsection code).
+              const subsetCodes = new Set(sec.themes.flatMap((t) => t.subsections));
+              const sectionLessons = allLessonStates.filter((ls) => {
+                const code = subsectionCode(ls.lesson.spec_reference);
+                return !!code && subsetCodes.has(code);
+              });
+              if (sectionLessons.length === 0) return null;
+
+              const completedCount = sectionLessons.filter((l) => l.completed).length;
+              const pct = Math.round((completedCount / sectionLessons.length) * 100);
+              const isOpen = openSectionCode === sec.code;
+
               return (
-                <div key={s.id} className="rounded-xl bg-[#1a2744] border border-white/5 overflow-hidden">
+                <div key={sec.code} className="rounded-xl bg-[#1a2744] border border-white/5 overflow-hidden">
                   <button
-                    onClick={() => setOpenSection(isOpen ? null : s.id)}
+                    onClick={() => setOpenSectionCode(isOpen ? null : sec.code)}
                     className="w-full flex items-center gap-3 p-4 sm:p-5 text-left hover:bg-white/[0.02] transition-colors cursor-pointer"
                   >
-                    <div className="size-9 rounded-lg bg-emerald/10 text-emerald flex items-center justify-center font-display font-bold shrink-0">
-                      {s.theme_number}
+                    <div className="px-2 h-9 min-w-9 rounded-lg bg-emerald/10 text-emerald flex items-center justify-center font-display font-bold shrink-0 text-sm">
+                      {sec.code}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-display font-semibold text-white truncate">
-                        Theme {s.theme_number}: {s.title}
+                        Section {sec.code}: {sec.title}
                       </h3>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        {completedCount} / {lessons.length} lessons complete
+                        {completedCount} / {sectionLessons.length} lessons complete
                       </p>
                       <div className="mt-2 h-1 rounded-full bg-white/10 overflow-hidden max-w-md">
                         <div
@@ -361,16 +368,20 @@ function CoursePage() {
 
                   {isOpen && (
                     <div className="border-t border-white/5">
-                      {lessons.length === 0 && (
-                        <div className="p-5 text-sm text-slate-400">No lessons in this section yet.</div>
-                      )}
-                      {subsections.map((sub) => (
-                        <SubsectionGroup
-                          key={sub.code}
-                          sub={sub}
-                          onTestOut={(lesson) => setTestOutLesson(lesson)}
-                        />
-                      ))}
+                      {sec.themes.map((theme) => {
+                        const themeLessons = sectionLessons.filter((ls) => {
+                          const code = subsectionCode(ls.lesson.spec_reference);
+                          return !!code && theme.subsections.includes(code);
+                        });
+                        return (
+                          <ThemeGroup
+                            key={theme.number}
+                            theme={theme}
+                            lessons={themeLessons}
+                            onTestOut={(lesson) => setTestOutLesson(lesson)}
+                          />
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -393,6 +404,64 @@ function CoursePage() {
     </AppLayout>
   );
 }
+
+function ThemeGroup({
+  theme,
+  lessons,
+  onTestOut,
+}: {
+  theme: AqaTheme;
+  lessons: LessonState[];
+  onTestOut: (lesson: Lesson) => void;
+}) {
+  const [open, setOpen] = useState(true);
+  const subsections = groupLessonsBySubsection(lessons, theme.subsections);
+  const completedCount = lessons.filter((l) => l.completed).length;
+  const pct =
+    lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
+
+  return (
+    <div className="border-t border-white/5 first:border-t-0">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 px-4 sm:px-5 py-3 text-left bg-white/[0.03] hover:bg-white/[0.05] transition-colors cursor-pointer"
+      >
+        <div className="size-7 rounded-md bg-emerald/15 text-emerald flex items-center justify-center font-display font-bold text-xs shrink-0">
+          T{theme.number}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm font-display font-semibold text-white truncate">
+            Theme {theme.number}: {theme.title}
+          </h4>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            {completedCount} / {lessons.length} lessons complete · {pct}%
+          </p>
+        </div>
+        {open ? (
+          <ChevronDown className="size-4 text-slate-500 shrink-0" />
+        ) : (
+          <ChevronRight className="size-4 text-slate-500 shrink-0" />
+        )}
+      </button>
+      {open && (
+        <div className="border-t border-white/5">
+          {subsections.length === 0 ? (
+            <div className="p-5 text-sm text-slate-400">No lessons in this theme yet.</div>
+          ) : (
+            subsections.map((sub) => (
+              <SubsectionGroup
+                key={sub.code}
+                sub={sub}
+                onTestOut={onTestOut}
+              />
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 function LessonRow({ state, onTestOut }: { state: LessonState; onTestOut: () => void }) {
   const { lesson, status, progressPercent, blockCount, hasQuestions } = state;
