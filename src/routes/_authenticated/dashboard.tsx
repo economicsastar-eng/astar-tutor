@@ -325,7 +325,7 @@ function DashboardPage() {
           )}
 
           {/* Continue Learning */}
-          {cont && (
+          {cont ? (
             <div className="rounded-xl bg-[#1a2744] border border-white/5 border-l-4 border-l-emerald p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex-1 min-w-0">
                 <p className="text-xs uppercase tracking-wider text-slate-400 font-medium">
@@ -351,11 +351,36 @@ function DashboardPage() {
                 className="bg-emerald hover:bg-emerald-hover text-emerald-foreground font-semibold shrink-0"
               >
                 <Link to="/course/$lessonId" params={{ lessonId: cont.slug }}>
-                  {cont.isFirstLesson ? "Start Your First Lesson" : "Continue"}
+                  {cont.isFirstLesson ? "Start Your First Lesson" : "Continue Learning"}
                   <ChevronRight className="size-4" />
                 </Link>
               </Button>
             </div>
+          ) : (
+            !loading && (
+              <div className="rounded-xl bg-[#1a2744] border border-white/5 border-l-4 border-l-gold p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs uppercase tracking-wider text-gold font-medium">
+                    Course complete
+                  </p>
+                  <h3 className="text-xl sm:text-2xl font-display font-bold text-white mt-1">
+                    All lessons complete!
+                  </h3>
+                  <p className="text-sm text-slate-300 mt-0.5">
+                    Review your weakest topics with spaced repetition to lock everything in.
+                  </p>
+                </div>
+                <Button
+                  asChild
+                  className="bg-gold text-[#0f1c2e] hover:bg-gold/90 font-semibold shrink-0"
+                >
+                  <Link to="/review">
+                    Start review
+                    <ChevronRight className="size-4" />
+                  </Link>
+                </Button>
+              </div>
+            )
           )}
 
           {/* Stat cards */}
