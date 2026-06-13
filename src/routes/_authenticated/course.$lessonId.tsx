@@ -524,7 +524,7 @@ function QuestionBlock({
               </>
             )}
           </div>
-          <p className="text-sm text-slate-300">{question.explanation}</p>
+          <p className="text-sm text-slate-300 whitespace-pre-line">{question.explanation}</p>
         </div>
       )}
       {!submitted && (
