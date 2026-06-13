@@ -544,25 +544,62 @@ function QuestionBlock({
   );
 }
 
+function parseKeyTerms(
+  raw: Block["key_terms"] | null,
+): { term: string; definition: string }[] {
+  if (!raw) return [];
+  const arr = Array.isArray(raw) ? raw : [];
+  return arr
+    .map((item) => {
+      if (typeof item === "string") {
+        const idx = item.indexOf(":");
+        if (idx === -1) return { term: item.trim(), definition: "" };
+        return {
+          term: item.slice(0, idx).trim(),
+          definition: item.slice(idx + 1).trim(),
+        };
+      }
+      const obj = item as { term?: string; definition?: string };
+      return { term: obj.term ?? "", definition: obj.definition ?? "" };
+    })
+    .filter((t) => t.term);
+}
+
 function SummaryBlock({ block }: { block: Block }) {
+  const keyTerms = parseKeyTerms(block.key_terms);
+  const points = block.summary_points ?? [];
   return (
-    <div>
+    <div className="space-y-5">
       {block.content_markdown && <Markdown source={block.content_markdown} />}
-      {block.summary_points && block.summary_points.length > 0 && (
-        <div className="mt-5 rounded-lg border border-gold/30 bg-gold/5 p-4">
-          <p className="text-xs uppercase tracking-wider text-gold font-semibold mb-2">
-            Remember
-          </p>
-          <ul className="space-y-1.5 text-sm text-slate-200">
-            {block.summary_points.map((p, i) => (
+      {points.length > 0 && (
+        <div className="rounded-lg border border-emerald/30 bg-emerald/10 p-5">
+          <h3 className="text-base font-display font-bold text-emerald mb-3">Summary</h3>
+          <ul className="space-y-2 text-sm text-slate-100">
+            {points.map((p, i) => (
               <li key={i} className="flex gap-2">
-                <span className="text-gold">•</span>
-                <span>{p}</span>
+                <span className="text-emerald mt-0.5">•</span>
+                <span className="whitespace-pre-line">{p}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
+      {keyTerms.length > 0 && (
+        <div className="rounded-lg border border-sky-400/30 bg-sky-400/10 p-5">
+          <h3 className="text-base font-display font-bold text-sky-300 mb-3">Key Terms</h3>
+          <dl className="space-y-2 text-sm">
+            {keyTerms.map((t, i) => (
+              <div key={i}>
+                <dt className="text-white font-semibold inline">{t.term}: </dt>
+                <dd className="text-slate-200 inline">{t.definition}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+    </div>
+  );
+}
     </div>
   );
 }
