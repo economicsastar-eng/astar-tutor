@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Logo } from "@/components/Logo";
 
 export function LandingFooter() {
