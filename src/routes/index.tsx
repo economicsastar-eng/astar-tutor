@@ -3,6 +3,7 @@ import { LandingNav } from "@/components/landing/Nav";
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Features } from "@/components/landing/Features";
+import { Comparison } from "@/components/landing/Comparison";
 import { Testimonials } from "@/components/landing/Testimonials";
 import { Pricing } from "@/components/landing/Pricing";
 import { Parents } from "@/components/landing/Parents";
@@ -29,6 +30,7 @@ function LandingPage() {
         <Hero />
         <HowItWorks />
         <Features />
+        <Comparison />
         <Testimonials />
         <Pricing />
         <Parents />
