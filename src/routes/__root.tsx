@@ -80,12 +80,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "EconAStar" },
       { name: "description", content: "An A-Level Economics learning platform offering a structured course, AI-powered essay marking, and adaptive review." },
-      { name: "author", content: "Lovable" },
+      { name: "author", content: "EconAStar" },
       { property: "og:title", content: "EconAStar" },
       { property: "og:description", content: "An A-Level Economics learning platform offering a structured course, AI-powered essay marking, and adaptive review." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "@EconAStar" },
       { name: "twitter:title", content: "EconAStar" },
       { name: "twitter:description", content: "An A-Level Economics learning platform offering a structured course, AI-powered essay marking, and adaptive review." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/39ad09cd-6456-4f17-9350-eef83c5098e1/id-preview-c06934e7--7c8bd82d-aafd-47f0-9c5d-d7f8808aa73b.lovable.app-1780947330607.png" },
@@ -139,4 +139,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-
