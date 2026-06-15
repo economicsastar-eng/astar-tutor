@@ -30,7 +30,7 @@ export function Hero() {
             </Button>
           </div>
           <p className="mt-6 text-sm text-muted-foreground">
-            AQA · Edexcel · OCR · WJEC — Tutor-built content, not AI slop
+            AQA Economics 7136 — fully mapped. Edexcel coming soon.
           </p>
         </div>
       </div>
