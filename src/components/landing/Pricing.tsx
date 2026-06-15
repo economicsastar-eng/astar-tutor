@@ -38,7 +38,7 @@ const tiers: Tier[] = [
     note: "Cancel anytime",
     priceId: "monthly_subscription",
     features: [
-      "Full access to all 93 lessons",
+      "Full access to all 92 lessons",
       "Unlimited AI tutor",
       "10 essay marks per month",
       "Spaced repetition review",
