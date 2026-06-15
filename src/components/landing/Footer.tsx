@@ -18,8 +18,8 @@ export function LandingFooter() {
             </div>
             <div className="space-y-2">
               <p className="font-semibold text-foreground">Legal</p>
-              <a href="#" className="block text-muted-foreground hover:text-foreground">Privacy</a>
-              <a href="#" className="block text-muted-foreground hover:text-foreground">Terms</a>
+              <Link to="/privacy" className="block text-muted-foreground hover:text-foreground">Privacy</Link>
+              <Link to="/terms" className="block text-muted-foreground hover:text-foreground">Terms</Link>
               <a href="mailto:economicsastar@gmail.com" className="block text-muted-foreground hover:text-foreground">Contact</a>
             </div>
           </div>
