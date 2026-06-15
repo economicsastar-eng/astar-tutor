@@ -237,10 +237,13 @@ function CoursePage() {
 
       const allLessons = (lessons ?? []) as Lesson[];
 
-      // Free tier: only Theme 1 (subsections under 3.1) unlocks.
+      // Free tier: only Theme 1 (subsections 3.1.1, 3.1.2, 3.1.3) unlocks.
+      // Theme 3 (3.1.4–3.1.8) is paid content.
       const isUnlocked = (l: Lesson) => {
         if (isPaid) return true;
-        return !!l.spec_reference && l.spec_reference.startsWith("3.1");
+        if (!l.spec_reference) return false;
+        const sub = l.spec_reference.split(".").slice(0, 3).join(".");
+        return sub === "3.1.1" || sub === "3.1.2" || sub === "3.1.3";
       };
 
       const states: LessonState[] = allLessons.map((l) => {
